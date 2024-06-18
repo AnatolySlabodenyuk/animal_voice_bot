@@ -3,10 +3,10 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command, CommandStart
 from keyboards.base_kb import base_kb
 from keyboards.inline_kb import inline_kb
-from lexicon.base_commands_enum import BaseCommands
-from lexicon.buttons_enum import Buttons, InlineButtons, CallbackData
-from database.database import create_table, get_file_id_from_table, add_audio_to_table
-
+from keyboards.inline_kb_new import AnimalsCallbackFactory, create_inline_kb
+from lexicon.base_commands_enum import BaseCommandsEnum
+from lexicon.buttons_enum import ButtonsEnum, InlineButtonsEnum, CallbackDataEnum
+from database.database import create_table, get_file_id_from_table, add_audio_to_table, get_button_ids, get_file_name_from_table
 
 # Инициализируем роутер уровня модуля
 router = Router()
@@ -16,16 +16,16 @@ router = Router()
 @router.message(CommandStart())
 async def process_start_command(message: Message):
     await message.answer(
-        text=BaseCommands.START.value,
+        text=BaseCommandsEnum.START.value,
         reply_markup=base_kb
     )
 
 
 # Этот хэндлер срабатывает на кнопку restart_button
-@router.message(F.text == Buttons.RESTART_BUTTON.value)
+@router.message(F.text == ButtonsEnum.RESTART_BUTTON.value)
 async def process_restart_button(message: Message):
     await message.answer(
-        text=BaseCommands.START.value,
+        text=BaseCommandsEnum.START.value,
         reply_markup=base_kb
     )
 
@@ -34,25 +34,36 @@ async def process_restart_button(message: Message):
 @router.message(Command(commands="help"))
 async def process_help_command(message: Message):
     await message.answer(
-        text=BaseCommands.HELP.value,
+        text=BaseCommandsEnum.HELP.value,
         reply_markup=base_kb
     )
 
 
 # Этот хэндлер срабатывает на кнопку help_button
-@router.message(F.text == Buttons.HELP_BUTTON.value)
+@router.message(F.text == ButtonsEnum.HELP_BUTTON.value)
 async def process_help_button(message: Message):
     await message.answer(
-        text=BaseCommands.HELP.value,
+        text=BaseCommandsEnum.HELP.value,
         reply_markup=base_kb
     )
 
 
+# # Этот хэндлер срабатывает на кнопку выбрать животное
+# @router.message(F.text == Buttons.ANIMAL_CHOOSE_BUTTON.value)
+# async def process_animal_choose_button(message: Message):
+#     await message.answer(
+#         text=BaseCommands.ANIMAL_CHOOSE_BUTTON.value,
+#         reply_markup=inline_kb
+#     )
+
+
 # Этот хэндлер срабатывает на кнопку выбрать животное
-@router.message(F.text == Buttons.ANIMAL_CHOOSE_BUTTON.value)
+@router.message(F.text == ButtonsEnum.ANIMAL_CHOOSE_BUTTON.value)
 async def process_animal_choose_button(message: Message):
+    button_ids = await get_button_ids()
+    inline_kb = await create_inline_kb(width=1, button_ids=button_ids)
     await message.answer(
-        text=BaseCommands.ANIMAL_CHOOSE_BUTTON.value,
+        text=BaseCommandsEnum.ANIMAL_CHOOSE_BUTTON.value,
         reply_markup=inline_kb
     )
 
@@ -78,34 +89,47 @@ async def process_button_press(callback: CallbackQuery, animal_in_table: str, an
         # await callback.message.answer(f"File Id : {file_id}")
 
 
-# Этот хэндлер будет срабатывать на нажатие инлайн-кнопки с животным Кошка
-@router.callback_query(F.data == CallbackData.INLINE_BUTTON_CAT_PRESSED.value)
-async def process_button_cat_press(callback: CallbackQuery):
+# Этот хэндлер будет срабатывать на нажатие любой инлайн кнопки
+# и отправлять в чат форматированный ответ с данными из callback_data
+@router.callback_query(AnimalsCallbackFactory.filter())
+async def process_animal_press(callback: CallbackQuery,
+                               callback_data: AnimalsCallbackFactory):
     await process_button_press(
         callback=callback,
-        animal_in_table=InlineButtons.CAT.name,
-        animal_name=InlineButtons.CAT.value,
-        audio_path='database/sounds/cat.mp3'
+        animal_in_table=await get_file_name_from_table(callback_data.button_id),
+        animal_name=await get_file_name_from_table(callback_data.button_id),
+        audio_path=f'database/sounds/{await get_file_name_from_table(callback_data.button_id)}.mp3'
     )
 
 
-# Этот хэндлер будет срабатывать на нажатие инлайн-кнопки с животным Собака
-@router.callback_query(F.data == CallbackData.INLINE_BUTTON_DOG_PRESSED.value)
-async def process_button_dog_press(callback: CallbackQuery):
-    await process_button_press(
-        callback=callback,
-        animal_in_table=InlineButtons.DOG.name,
-        animal_name=InlineButtons.DOG.value,
-        audio_path='database/sounds/dog.mp3'
-    )
+# # Этот хэндлер будет срабатывать на нажатие инлайн-кнопки с животным Кошка
+# @router.callback_query(F.data == CallbackDataEnum.INLINE_BUTTON_CAT_PRESSED.value)
+# async def process_button_cat_press(callback: CallbackQuery):
+#     await process_button_press(
+#         callback=callback,
+#         animal_in_table=InlineButtonsEnum.CAT.name,
+#         animal_name=InlineButtonsEnum.CAT.value,
+#         audio_path='database/sounds/cat.mp3'
+#     )
 
 
-# Этот хэндлер будет срабатывать на нажатие инлайн-кнопки с животным Чубакка
-@router.callback_query(F.data == CallbackData.INLINE_BUTTON_CHEWBACCA_PRESSED.value)
-async def process_button_сhewbacca_press(callback: CallbackQuery):
-    await process_button_press(
-        callback=callback,
-        animal_in_table=InlineButtons.CHEWBACCA.name,
-        animal_name=InlineButtons.CHEWBACCA.value,
-        audio_path='database/sounds/chewbacca.mp3'
-    )
+# # Этот хэндлер будет срабатывать на нажатие инлайн-кнопки с животным Собака
+# @router.callback_query(F.data == CallbackDataEnum.INLINE_BUTTON_DOG_PRESSED.value)
+# async def process_button_dog_press(callback: CallbackQuery):
+#     await process_button_press(
+#         callback=callback,
+#         animal_in_table=InlineButtonsEnum.DOG.name,
+#         animal_name=InlineButtonsEnum.DOG.value,
+#         audio_path='database/sounds/dog.mp3'
+#     )
+
+
+# # Этот хэндлер будет срабатывать на нажатие инлайн-кнопки с животным Чубакка
+# @router.callback_query(F.data == CallbackDataEnum.INLINE_BUTTON_CHEWBACCA_PRESSED.value)
+# async def process_button_сhewbacca_press(callback: CallbackQuery):
+#     await process_button_press(
+#         callback=callback,
+#         animal_in_table=InlineButtonsEnum.CHEWBACCA.name,
+#         animal_name=InlineButtonsEnum.CHEWBACCA.value,
+#         audio_path='database/sounds/chewbacca.mp3'
+#     )
