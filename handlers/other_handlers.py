@@ -1,7 +1,7 @@
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
-from lexicon.base_commands_enum import BaseCommands
+from lexicon.base_commands_enum import BaseCommandsEnum
 
 # Инициализируем роутер уровня модуля
 router = Router()
@@ -11,5 +11,5 @@ router = Router()
 @router.message()
 async def send_answer(message: Message):
     await message.answer(
-        text=BaseCommands.OTHER_ANSWER.value
+        text=BaseCommandsEnum.OTHER_ANSWER.value
     )

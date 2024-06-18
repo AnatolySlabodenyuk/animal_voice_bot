@@ -1,20 +1,20 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
-from lexicon.buttons_enum import Buttons
+from lexicon.buttons_enum import ButtonsEnum
 
 
 # ------- Создаем клавиатуру через ReplyKeyboardBuilder -------
 # Создаем кнопки
 button_restart: KeyboardButton = KeyboardButton(
-    text=Buttons.RESTART_BUTTON.value
+    text=ButtonsEnum.RESTART_BUTTON.value
 )
 
 button_animal_choose: KeyboardButton = KeyboardButton(
-    text=Buttons.ANIMAL_CHOOSE_BUTTON.value
+    text=ButtonsEnum.ANIMAL_CHOOSE_BUTTON.value
 )
 
 button_help: KeyboardButton = KeyboardButton(
-    text=Buttons.HELP_BUTTON.value
+    text=ButtonsEnum.HELP_BUTTON.value
 )
 
 # Инициализируем билдер для клавиатуры с кнопками:
