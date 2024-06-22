@@ -101,24 +101,10 @@ async def process_animal_choose_button(message: Message):
 
 
 # Универсальная функция для обработки нажатий на инлайн-кнопки с животными
-async def process_button_press(callback: CallbackQuery, animal_in_table: str, animal_name: str, audio_path: str):
-    await create_table()
-    file_record = await get_file_id_from_table(animal_in_table)
-    if file_record is None:
-        await callback.answer(f"Так говорит Мистер {animal_name}")
-        audio = FSInputFile(audio_path)
-        message = await callback.message.answer_audio(audio=audio)
-        file_id = message.audio.file_id
-        await add_audio_to_table(
-            file_name=animal_in_table,
-            file_id=file_id
-        )
-        # await callback.message.answer(f"File Id : {file_id}")
-    else:
-        file_id = file_record[0]
-        await callback.answer(f"Так говорит Мистер {animal_name}")
-        await callback.message.answer_audio(audio=file_id)
-        # await callback.message.answer(f"File Id : {file_id}")
+async def process_button_press(callback: CallbackQuery, animal_id: int, animal_name: str):
+    file_id = await get_file_id_from_table(animal_id)
+    await callback.answer(f"Так говорит Мистер {animal_name}")
+    await callback.message.answer_audio(audio=file_id)
 
 
 # Этот хэндлер будет срабатывать на нажатие любой инлайн кнопки
@@ -128,9 +114,8 @@ async def process_animal_press(callback: CallbackQuery,
                                callback_data: AnimalsCallbackFactory):
     await process_button_press(
         callback=callback,
-        animal_in_table=await get_file_name_from_table(callback_data.button_id),
+        animal_id=callback_data.button_id,
         animal_name=await get_file_name_from_table(callback_data.button_id),
-        audio_path=f'database/sounds/{await get_file_name_from_table(callback_data.button_id)}.mp3'
     )
 
 

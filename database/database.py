@@ -18,15 +18,15 @@ async def create_table():
         await connection.commit()
 
 
-async def get_file_id_from_table(file_name: str) -> str:
+async def get_file_id_from_table(id: int) -> str:
     async with aiosqlite.connect(DATABASE_NAME) as connection:
         cursor = await connection.execute(f'''
             SELECT file_id 
             FROM {TABLE_NAME} 
-            WHERE file_name = ?
-        ''', (file_name,))
+            WHERE id = ?
+        ''', (id,))
         result = await cursor.fetchone()
-        return result
+        return result[0] if result else None
 
 
 async def get_file_name_from_table(id: int) -> str:
