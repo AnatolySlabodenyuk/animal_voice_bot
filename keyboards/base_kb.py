@@ -13,6 +13,10 @@ button_animal_choose: KeyboardButton = KeyboardButton(
     text=ButtonsEnum.ANIMAL_CHOOSE_BUTTON.value
 )
 
+button_audio_upload: KeyboardButton = KeyboardButton(
+    text=ButtonsEnum.AUDIO_UPLOAD.value
+)
+
 button_help: KeyboardButton = KeyboardButton(
     text=ButtonsEnum.HELP_BUTTON.value
 )
@@ -21,7 +25,13 @@ button_help: KeyboardButton = KeyboardButton(
 base_kb_builder = ReplyKeyboardBuilder()
 
 # Добавляем кнопки в билдер с аргументом width=1 (количество кнопок в ряду)
-base_kb_builder.row(button_restart, button_animal_choose, button_help, width=1)
+base_kb_builder.row(
+    button_restart,
+    button_animal_choose,
+    button_audio_upload,
+    button_help,
+    width=1
+)
 
 # Создаем клавиатуру с кнопками:
 base_kb: ReplyKeyboardMarkup = base_kb_builder.as_markup(
