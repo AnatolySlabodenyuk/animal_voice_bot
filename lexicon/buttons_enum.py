@@ -6,6 +6,7 @@ class ButtonsEnum(enum.Enum):
     ANIMAL_CHOOSE_BUTTON = "🙈 Выбрать животное"
     AUDIO_UPLOAD = "🎧 Загрузить звук"
     HELP_BUTTON = "📄 Инструкция"
+    SEARCH_IN_WEB = "🌎 Найти в сети"
 
 
 class InlineButtonsEnum(enum.Enum):

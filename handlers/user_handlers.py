@@ -1,12 +1,14 @@
-from aiogram import F, Router, Bot
-from aiogram.types import Message, CallbackQuery, FSInputFile
+from aiogram import F, Router
+from aiogram.client.session import aiohttp
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
 from keyboards.base_kb import base_kb
-from keyboards.inline_kb import inline_kb
 from keyboards.inline_kb_new import AnimalsCallbackFactory, create_inline_kb
 from lexicon.base_commands_enum import BaseCommandsEnum
-from lexicon.buttons_enum import ButtonsEnum, InlineButtonsEnum, CallbackDataEnum
-from database.database import create_table, get_file_id_from_table, add_audio_to_table, get_button_ids, get_file_name_from_table
+from lexicon.buttons_enum import ButtonsEnum
+from database.database import get_file_id_from_table, add_audio_to_table, get_button_ids, \
+    get_file_name_from_table
+from bs4 import BeautifulSoup
 
 # Инициализируем роутер уровня модуля
 router = Router()
@@ -81,15 +83,6 @@ async def process_set_file_name(message: Message):
 
 
 # Этот хэндлер срабатывает на кнопку выбрать животное
-# @router.message(F.text == Buttons.ANIMAL_CHOOSE_BUTTON.value)
-# async def process_animal_choose_button(message: Message):
-#     await message.answer(
-#         text=BaseCommands.ANIMAL_CHOOSE_BUTTON.value,
-#         reply_markup=inline_kb
-#     )
-
-
-# Этот хэндлер срабатывает на кнопку выбрать животное
 @router.message(F.text == ButtonsEnum.ANIMAL_CHOOSE_BUTTON.value)
 async def process_animal_choose_button(message: Message):
     button_ids = await get_button_ids()
@@ -110,8 +103,10 @@ async def process_button_press(callback: CallbackQuery, animal_id: int, animal_n
 # Этот хэндлер будет срабатывать на нажатие любой инлайн кнопки
 # и отправлять в чат форматированный ответ с данными из callback_data
 @router.callback_query(AnimalsCallbackFactory.filter())
-async def process_animal_press(callback: CallbackQuery,
-                               callback_data: AnimalsCallbackFactory):
+async def process_animal_press(
+        callback: CallbackQuery,
+        callback_data: AnimalsCallbackFactory
+):
     await process_button_press(
         callback=callback,
         animal_id=callback_data.button_id,
@@ -119,34 +114,48 @@ async def process_animal_press(callback: CallbackQuery,
     )
 
 
-# # Этот хэндлер будет срабатывать на нажатие инлайн-кнопки с животным Кошка
-# @router.callback_query(F.data == CallbackDataEnum.INLINE_BUTTON_CAT_PRESSED.value)
-# async def process_button_cat_press(callback: CallbackQuery):
-#     await process_button_press(
-#         callback=callback,
-#         animal_in_table=InlineButtonsEnum.CAT.name,
-#         animal_name=InlineButtonsEnum.CAT.value,
-#         audio_path='database/sounds/cat.mp3'
-#     )
+# Этот хэндлер срабатывает на кнопку найти в интернете
+@router.message(F.text == ButtonsEnum.SEARCH_IN_WEB.value)
+async def process_search_in_web_button(message: Message):
+    await message.answer(text=BaseCommandsEnum.SEARCH_IN_WEB_BUTTON.value)
 
 
-# # Этот хэндлер будет срабатывать на нажатие инлайн-кнопки с животным Собака
-# @router.callback_query(F.data == CallbackDataEnum.INLINE_BUTTON_DOG_PRESSED.value)
-# async def process_button_dog_press(callback: CallbackQuery):
-#     await process_button_press(
-#         callback=callback,
-#         animal_in_table=InlineButtonsEnum.DOG.name,
-#         animal_name=InlineButtonsEnum.DOG.value,
-#         audio_path='database/sounds/dog.mp3'
-#     )
+@router.message(
+    # F.text == "Поезд"
+)
+async def search_audio(message: Message):
+    BASE_URL = "https://zvukogram.com/?r=search&s="
+    query = message.text.strip()
+    search_url = BASE_URL + query
 
+    async with aiohttp.ClientSession() as session:
+        async with session.get(search_url, ssl=False) as response:
+            if response.status == 200:
+                html_content = await response.text()
+                soup = BeautifulSoup(html_content, "html.parser")
 
-# # Этот хэндлер будет срабатывать на нажатие инлайн-кнопки с животным Чубакка
-# @router.callback_query(F.data == CallbackDataEnum.INLINE_BUTTON_CHEWBACCA_PRESSED.value)
-# async def process_button_сhewbacca_press(callback: CallbackQuery):
-#     await process_button_press(
-#         callback=callback,
-#         animal_in_table=InlineButtonsEnum.CHEWBACCA.name,
-#         animal_name=InlineButtonsEnum.CHEWBACCA.value,
-#         audio_path='database/sounds/chewbacca.mp3'
-#     )
+                # Находим блоки с треками
+                audio_blocks = soup.find_all("div", class_="onetrack accordion")
+
+                if not audio_blocks:
+                    await message.reply("К сожалению, ничего не найдено.")
+                    return
+
+                for block in audio_blocks[:3]:  # Ограничиваем количество отправляемых треков
+                    try:
+                        # Извлекаем данные
+                        title = block.find("div", class_="waveTitle").text.strip()
+                        mp3_link = block.find("a", class_="dwdButtn", text="mp3")["href"]
+
+                        # Формируем полный URL
+                        full_mp3_url = "https://zvukogram.com" + mp3_link
+
+                        await message.answer_audio(
+                            audio=full_mp3_url,
+                            caption=f"🎵 {title}"
+                        )
+
+                    except Exception as e:
+                        await message.reply(f"Ошибка при обработке трека: {e}")
+            else:
+                await message.reply(f"Ошибка {response.status}: Не удалось подключиться к сайту.")

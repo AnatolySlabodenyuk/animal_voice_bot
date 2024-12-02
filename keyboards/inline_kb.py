@@ -23,7 +23,6 @@ inline_button_сhewbacca: InlineKeyboardButton = InlineKeyboardButton(
 # Инициализируем билдер для клавиатуры с инлайн-кнопками:
 inline_kb_builder = InlineKeyboardBuilder()
 
-
 # Добавляем кнопки в билдер с аргументом width=1 (количество кнопок в ряду)
 inline_kb_builder.row(inline_button_cat, inline_button_dog,
                       inline_button_сhewbacca, width=1)

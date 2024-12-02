@@ -1,6 +1,4 @@
-import sqlite3
 import aiosqlite
-from contextlib import closing
 
 DATABASE_NAME = "database/file_database.db"
 TABLE_NAME = "files_information"

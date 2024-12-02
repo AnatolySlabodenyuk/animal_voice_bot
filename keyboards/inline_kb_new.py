@@ -1,6 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from lexicon.buttons_enum import InlineButtonsEnum, CallbackDataEnum
 from database.database import get_file_name_from_table
 from aiogram.filters.callback_data import CallbackData
 

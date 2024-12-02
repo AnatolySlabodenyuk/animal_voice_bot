@@ -1,6 +1,5 @@
 from aiogram import Router
 from aiogram.types import Message
-from aiogram.filters import Command
 from lexicon.base_commands_enum import BaseCommandsEnum
 
 # Инициализируем роутер уровня модуля
