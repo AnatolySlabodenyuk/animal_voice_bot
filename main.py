@@ -7,6 +7,7 @@ from aiogram.client.default import DefaultBotProperties
 from config_data.config import Config, load_config
 from handlers import other_handlers, user_handlers
 from keyboards.set_menu import set_main_menu
+from database.database import create_table
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
@@ -25,6 +26,8 @@ async def main():
 
     # Загружаем конфиг в переменную config
     config: Config = load_config()
+
+    await create_table()
 
     # Инициализируем бот и диспетчер
     bot = Bot(
@@ -46,5 +49,3 @@ async def main():
 
 
 asyncio.run(main())
-
-
