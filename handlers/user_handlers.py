@@ -3,6 +3,7 @@ from aiogram.client.session import aiohttp
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
 from keyboards.base_kb import base_kb
+from keyboards.admin_kb import admin_kb
 from keyboards.inline_kb_new import AnimalsCallbackFactory, create_inline_kb
 from lexicon.base_commands_enum import BaseCommandsEnum
 from lexicon.buttons_enum import ButtonsEnum
@@ -47,6 +48,15 @@ async def process_help_button(message: Message):
     await message.answer(
         text=BaseCommandsEnum.HELP.value,
         reply_markup=base_kb
+    )
+
+
+# Этот хэндлер срабатывает на команду /admin
+@router.message(Command(commands="admin"))
+async def process_admin_command(message: Message):
+    await message.answer(
+        text=BaseCommandsEnum.ADMIN.value,
+        reply_markup=admin_kb
     )
 
 
@@ -135,17 +145,21 @@ async def search_audio(message: Message):
                 soup = BeautifulSoup(html_content, "html.parser")
 
                 # Находим блоки с треками
-                audio_blocks = soup.find_all("div", class_="onetrack accordion")
+                audio_blocks = soup.find_all(
+                    "div", class_="onetrack accordion")
 
                 if not audio_blocks:
                     await message.reply("К сожалению, ничего не найдено.")
                     return
 
-                for block in audio_blocks[:3]:  # Ограничиваем количество отправляемых треков
+                # Ограничиваем количество отправляемых треков
+                for block in audio_blocks[:3]:
                     try:
                         # Извлекаем данные
-                        title = block.find("div", class_="waveTitle").text.strip()
-                        mp3_link = block.find("a", class_="dwdButtn", text="mp3")["href"]
+                        title = block.find(
+                            "div", class_="waveTitle").text.strip()
+                        mp3_link = block.find(
+                            "a", class_="dwdButtn", text="mp3")["href"]
 
                         # Формируем полный URL
                         full_mp3_url = "https://zvukogram.com" + mp3_link
