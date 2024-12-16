@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from config_data.config import Config, load_config
-from handlers import other_handlers, user_handlers
+from handlers import other_handlers, user_handlers, admin_handlers
 from keyboards.set_menu import set_main_menu
 from database.database import create_table
 
@@ -40,6 +40,7 @@ async def main():
     await set_main_menu(bot)
 
     # Регистриуем роутеры в диспетчере
+    dp.include_router(admin_handlers.router)
     dp.include_router(user_handlers.router)
     dp.include_router(other_handlers.router)
 
