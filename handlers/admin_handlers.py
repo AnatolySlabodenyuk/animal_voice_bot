@@ -1,15 +1,11 @@
 from aiogram import F, Router
-from aiogram.client.session import aiohttp
-from aiogram.types import Message, CallbackQuery
-from aiogram.filters import Command, CommandStart
+from aiogram.types import Message
+from aiogram.filters import Command
 from keyboards.base_kb import base_kb
 from keyboards.admin_kb import admin_kb
-from keyboards.inline_kb_new import AnimalsCallbackFactory, create_inline_kb
 from lexicon.base_commands_enum import BaseCommandsEnum
 from lexicon.buttons_enum import ButtonsEnum
-from database.database import get_file_id_from_table, add_audio_to_table, get_button_ids, \
-    get_file_name_from_table
-from bs4 import BeautifulSoup
+from database.database import add_audio_to_table
 
 # Инициализируем роутер уровня модуля
 router = Router()
@@ -39,7 +35,7 @@ class Form:
 @router.message(F.audio)
 async def process_upload_audio(message: Message):
     file_id = message.audio.file_id
-    await message.reply("Пожалуйста, введите название животного.")
+    await message.reply(text=BaseCommandsEnum.SET_ANIMAL_NAME.value)
     Form.state_file_id = file_id
 
 

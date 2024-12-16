@@ -3,7 +3,6 @@ from aiogram.client.session import aiohttp
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
 from keyboards.base_kb import base_kb
-from keyboards.admin_kb import admin_kb
 from keyboards.inline_kb_new import AnimalsCallbackFactory, create_inline_kb
 from lexicon.base_commands_enum import BaseCommandsEnum
 from lexicon.buttons_enum import ButtonsEnum
