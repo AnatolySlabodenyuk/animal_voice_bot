@@ -8,8 +8,8 @@ button_restart: KeyboardButton = KeyboardButton(
     text=ButtonsEnum.RESTART_BUTTON.value
 )
 
-button_animal_choose: KeyboardButton = KeyboardButton(
-    text=ButtonsEnum.ANIMAL_CHOOSE_BUTTON.value
+voice_category_choose: KeyboardButton = KeyboardButton(
+    text=ButtonsEnum.VOICE_CATEGORY_CHOOSE_BUTTON.value
 )
 
 button_help: KeyboardButton = KeyboardButton(
@@ -26,7 +26,7 @@ base_kb_builder = ReplyKeyboardBuilder()
 # Добавляем кнопки в билдер с аргументом width=1 (количество кнопок в ряду)
 base_kb_builder.row(
     button_restart,
-    button_animal_choose,
+    voice_category_choose,
     button_help,
     button_search_in_web,
     width=1

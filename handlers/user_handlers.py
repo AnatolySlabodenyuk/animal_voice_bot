@@ -3,38 +3,45 @@ from aiogram.client.session import aiohttp
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
 from keyboards.base_kb import base_kb
-from keyboards.inline_kb_new import AnimalsCallbackFactory, create_inline_kb
+from keyboards.voice_inline_kb import create_voice_category_inline_kb, \
+    VoiceTypesCallbackFactory, create_voice_names_inline_kb, VoiceNamesCallbackFactory
 from lexicon.base_commands_enum import BaseCommandsEnum
 from lexicon.buttons_enum import ButtonsEnum
-from database.database import get_file_id_from_table, add_audio_to_table, get_button_ids, \
-    get_file_name_from_table
+from database.database import get_file_name_from_table, get_audio_file_id_from_table
 from bs4 import BeautifulSoup
 
-# Инициализируем роутер уровня модуля
+from lexicon.voice_types_enum import VoiceCategoryEnum
+
 router = Router()
 
 
-# Этот хэндлер срабатывает на команду /start
 @router.message(CommandStart())
 async def process_start_command(message: Message):
+    """
+    Этот хэндлер срабатывает на команду /start
+    """
     await message.answer(
         text=BaseCommandsEnum.START.value,
         reply_markup=base_kb
     )
 
 
-# Этот хэндлер срабатывает на кнопку restart_button
 @router.message(F.text == ButtonsEnum.RESTART_BUTTON.value)
 async def process_restart_button(message: Message):
+    """
+    Этот хэндлер срабатывает на кнопку restart_button
+    """
     await message.answer(
         text=BaseCommandsEnum.START.value,
         reply_markup=base_kb
     )
 
 
-# Этот хэндлер срабатывает на команду /help
 @router.message(Command(commands="help"))
 async def process_help_command(message: Message):
+    """
+    Этот хэндлер срабатывает на команду /help
+    """
     await message.answer(
         text=BaseCommandsEnum.HELP.value,
         reply_markup=base_kb
@@ -44,54 +51,102 @@ async def process_help_command(message: Message):
 # Этот хэндлер срабатывает на кнопку help_button
 @router.message(F.text == ButtonsEnum.HELP_BUTTON.value)
 async def process_help_button(message: Message):
+    """
+    Этот хэндлер срабатывает на кнопку help_button
+    """
     await message.answer(
         text=BaseCommandsEnum.HELP.value,
         reply_markup=base_kb
     )
 
 
-# Этот хэндлер срабатывает на кнопку выбрать животное
-@router.message(F.text == ButtonsEnum.ANIMAL_CHOOSE_BUTTON.value)
-async def process_animal_choose_button(message: Message):
-    button_ids = await get_button_ids()
-    inline_kb = await create_inline_kb(width=1, button_ids=button_ids)
+@router.message(F.text == ButtonsEnum.VOICE_CATEGORY_CHOOSE_BUTTON.value)
+async def process_voice_category_choose_button(message: Message):
+    """
+    Этот хэндлер срабатывает на кнопку выбрать категорию
+    """
     await message.answer(
-        text=BaseCommandsEnum.ANIMAL_CHOOSE_BUTTON.value,
-        reply_markup=inline_kb
+        text=BaseCommandsEnum.CHOSE_CATEGORY.value,
+        reply_markup=await create_voice_category_inline_kb()
     )
 
 
-# Универсальная функция для обработки нажатий на инлайн-кнопки с животными
-async def process_button_press(callback: CallbackQuery, animal_id: int, animal_name: str):
-    file_id = await get_file_id_from_table(animal_id)
-    await callback.answer(f"Так говорит Мистер {animal_name}")
+@router.callback_query(VoiceTypesCallbackFactory.filter())
+async def inline_products_button_press(
+        callback: CallbackQuery,
+        callback_data: VoiceTypesCallbackFactory
+):
+    """
+    Этот хэндлер срабатывает на выбор категории
+    """
+    if callback_data.voice_type == VoiceCategoryEnum.animals.value:
+        await callback.message.answer(
+            text=BaseCommandsEnum.CHOSE_ANIMAL.value,
+            reply_markup=await create_voice_names_inline_kb(
+                voice_names_list=await get_file_name_from_table(category=VoiceCategoryEnum.animals.value))
+        )
+        await callback.answer()
+
+    elif callback_data.voice_type == VoiceCategoryEnum.transport.value:
+        await callback.message.answer(
+            text=BaseCommandsEnum.CHOSE_TRANSPORT.value,
+            reply_markup=await create_voice_names_inline_kb(
+                voice_names_list=await get_file_name_from_table(category=VoiceCategoryEnum.transport.value))
+        )
+        await callback.answer()
+
+    elif callback_data.voice_type == VoiceCategoryEnum.objects.value:
+        await callback.message.answer(
+            text=BaseCommandsEnum.CHOSE_OBJECT.value,
+            reply_markup=await create_voice_names_inline_kb(
+                voice_names_list=await get_file_name_from_table(category=VoiceCategoryEnum.objects.value))
+        )
+        await callback.answer()
+
+    else:
+        await callback.message.answer(
+            text='Что-то пошло не так'
+        )
+        await callback.answer()
+
+
+async def get_audio_file(callback: CallbackQuery, voice_name: str):
+    """
+    Универсальная функция для обработки нажатий на инлайн-кнопки с животными
+    """
+    file_id = await get_audio_file_id_from_table(voice_name)
+    await callback.answer(f"Так звучит {voice_name}")
     await callback.message.answer_audio(audio=file_id)
 
 
-# Этот хэндлер будет срабатывать на нажатие любой инлайн кнопки
-# и отправлять в чат форматированный ответ с данными из callback_data
-@router.callback_query(AnimalsCallbackFactory.filter())
-async def process_animal_press(
+@router.callback_query(VoiceNamesCallbackFactory.filter())
+async def process_voice_button_press(
         callback: CallbackQuery,
-        callback_data: AnimalsCallbackFactory
+        callback_data: VoiceNamesCallbackFactory
 ):
-    await process_button_press(
+    """
+    Этот хэндлер будет срабатывать на нажатие любой инлайн кнопки
+    и отправлять в чат форматированный ответ с данными из callback_data
+    """
+    await get_audio_file(
         callback=callback,
-        animal_id=callback_data.button_id,
-        animal_name=await get_file_name_from_table(callback_data.button_id),
+        voice_name=callback_data.voice_name,
     )
 
 
-# Этот хэндлер срабатывает на кнопку найти в интернете
 @router.message(F.text == ButtonsEnum.SEARCH_IN_WEB.value)
 async def process_search_in_web_button(message: Message):
+    """
+    Этот хэндлер срабатывает на кнопку найти в интернете
+    """
     await message.answer(text=BaseCommandsEnum.SEARCH_IN_WEB_BUTTON.value)
 
 
-@router.message(
-    # F.text == "Поезд"
-)
+@router.message()
 async def search_audio(message: Message):
+    """
+    Хэндлер для поиска аудио на Zvukogram.com
+    """
     BASE_URL = "https://zvukogram.com/?r=search&s="
     query = message.text.strip()
     search_url = BASE_URL + query
@@ -102,26 +157,22 @@ async def search_audio(message: Message):
                 html_content = await response.text()
                 soup = BeautifulSoup(html_content, "html.parser")
 
-                # Находим блоки с треками
-                audio_blocks = soup.find_all(
-                    "div", class_="onetrack accordion")
+                # Поиск элементов треков
+                audio_blocks = soup.find_all("div", class_="onetrack accordion")
 
                 if not audio_blocks:
                     await message.reply("К сожалению, ничего не найдено.")
                     return
 
-                # Ограничиваем количество отправляемых треков
+                # Ограничиваем количество треков
                 for block in audio_blocks[:3]:
                     try:
-                        # Извлекаем данные
-                        title = block.find(
-                            "div", class_="waveTitle").text.strip()
-                        mp3_link = block.find(
-                            "a", class_="dwdButtn", text="mp3")["href"]
+                        # Извлечение данных
+                        title = block.find("div", class_="waveTitle").text.strip()
+                        mp3_link = block["data-track"]
+                        full_mp3_url = f"https://zvukogram.com{mp3_link}"
 
-                        # Формируем полный URL
-                        full_mp3_url = "https://zvukogram.com" + mp3_link
-
+                        # Отправка пользователю
                         await message.answer_audio(
                             audio=full_mp3_url,
                             caption=f"🎵 {title}"
