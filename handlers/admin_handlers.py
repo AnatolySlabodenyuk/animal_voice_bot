@@ -84,4 +84,5 @@ async def audio_category_chosen(message: Message, state: FSMContext):
         reply_markup=admin_kb
     )
     # Сброс состояния и сохранённых данных у пользователя
+    Form.state_file_id = None
     await state.clear()
