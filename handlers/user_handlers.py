@@ -2,6 +2,8 @@ from aiogram import F, Router
 from aiogram.client.session import aiohttp
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 from keyboards.base_kb import base_kb
 from keyboards.voice_inline_kb import create_voice_category_inline_kb, \
     VoiceTypesCallbackFactory, create_voice_names_inline_kb, VoiceNamesCallbackFactory
@@ -13,6 +15,10 @@ from bs4 import BeautifulSoup
 from lexicon.voice_types_enum import VoiceCategoryEnum
 
 router = Router()
+
+
+class SearchInNetState(StatesGroup):
+    waiting_for_key_word = State()
 
 
 @router.message(CommandStart())
@@ -135,20 +141,24 @@ async def process_voice_button_press(
 
 
 @router.message(F.text == ButtonsEnum.SEARCH_IN_WEB.value)
-async def process_search_in_web_button(message: Message):
+async def process_search_in_web_button(message: Message, state: FSMContext):
     """
     Этот хэндлер срабатывает на кнопку найти в интернете
     """
     await message.answer(text=BaseCommandsEnum.SEARCH_IN_WEB_BUTTON.value)
 
+    await state.set_state(SearchInNetState.waiting_for_key_word)
 
-@router.message()
-async def search_audio(message: Message):
+
+@router.message(SearchInNetState.waiting_for_key_word)
+async def search_audio(message: Message, state: FSMContext):
     """
     Хэндлер для поиска аудио на Zvukogram.com
     """
     BASE_URL = "https://zvukogram.com/?r=search&s="
     query = message.text.strip()
+    await state.update_data(waiting_for_key_word=query)
+
     search_url = BASE_URL + query
 
     async with aiohttp.ClientSession() as session:
@@ -182,3 +192,5 @@ async def search_audio(message: Message):
                         await message.reply(f"Ошибка при обработке трека: {e}")
             else:
                 await message.reply(f"Ошибка {response.status}: Не удалось подключиться к сайту.")
+
+    await state.clear()
