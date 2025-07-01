@@ -5,6 +5,7 @@ services:
     container_name: audio_hunter_bot
     environment:
       BOT_TOKEN: "your_bot_token"
+      BOT_ADMIN_USER_ID: "your_user_id"
     build:
       context: .
       dockerfile: Dockerfile
