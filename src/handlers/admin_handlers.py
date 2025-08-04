@@ -11,7 +11,8 @@ from keyboards.voice_category_simple_kb import voice_category_simple_kb
 from lexicon.base_commands_enum import BaseCommandsEnum
 from lexicon.buttons_enum import ButtonsEnum
 from database.database import add_audio_to_table
-from database.database import get_top_users_stats
+from database.database import get_top_users_stats, get_all_users
+import asyncio
 
 router = Router()
 
@@ -32,10 +33,13 @@ async def process_admin_command(message: Message):
     """
     Этот хэндлер срабатывает на команду /admin
     """
-    await message.answer(
-        text=BaseCommandsEnum.ADMIN.value,
-        reply_markup=admin_kb
-    )
+    if message.from_user and message.from_user.id == int(ADMIN_USER_ID):
+        await message.answer(
+            text=BaseCommandsEnum.ADMIN.value,
+            reply_markup=admin_kb
+        )
+    else:
+        await message.answer(BaseCommandsEnum.ACCESS_DENIED.value)
 
 
 @router.message(F.text == ButtonsEnum.AUDIO_UPLOAD.value)
@@ -95,7 +99,7 @@ async def audio_category_chosen(message: Message, state: FSMContext):
     await state.clear()
 
 
-@router.message(Command(commands="stats"))
+@router.message(F.text == ButtonsEnum.GET_STATS.value)
 async def process_stats_command(message: Message):
     """
     Этот хэндлер для вывода статистики
@@ -110,4 +114,44 @@ async def process_stats_command(message: Message):
             text += f"{idx}. <code>{username or user_id}</code> — <b>{count}</b> (посл. {last})\n"
         await message.answer(text, parse_mode="HTML")
     else:
-        await message.answer("Нет доступа.")
+        await message.answer(BaseCommandsEnum.ACCESS_DENIED.value)
+
+
+async def send_feedback_to_all_users(bot, message: Message):
+    """Отправить сообщение с предложением оставить обратную связь всем пользователям"""
+    if message.from_user and message.from_user.id == int(ADMIN_USER_ID):
+        users = await get_all_users()
+
+        if not users:
+            await message.answer(BaseCommandsEnum.NO_USERS_FOUND.value)
+            return
+
+        success_count = 0
+        error_count = 0
+
+        for user_id, username in users:
+            try:
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=BaseCommandsEnum.FEEDBACK_MESSAGE.value
+                )
+                success_count += 1
+                # Небольшая задержка чтобы не превысить лимиты Telegram
+                await asyncio.sleep(0.05)
+            except Exception as e:
+                error_count += 1
+                print(f"Ошибка отправки пользователю {user_id}: {e}")
+
+        await message.answer(
+            f"{BaseCommandsEnum.FEEDBACK_SENT.value}\n"
+            f"✅ Успешно отправлено: {success_count}\n"
+            f"❌ Ошибок: {error_count}"
+        )
+    else:
+        await message.answer(BaseCommandsEnum.ACCESS_DENIED.value)
+
+
+@router.message(F.text == ButtonsEnum.SEND_FEEDBACK.value)
+async def process_send_feedback_button(message: Message):
+    """Обработчик кнопки отправки обратной связи всем пользователям"""
+    await send_feedback_to_all_users(message.bot, message)

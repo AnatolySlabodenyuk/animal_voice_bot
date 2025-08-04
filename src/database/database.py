@@ -83,7 +83,18 @@ async def get_top_users_stats(limit: int = 50):
         cursor = await connection.execute(f'''
             SELECT user_id, username, requests_count, last_request
             FROM {USER_STATS_TABLE}
+            WHERE requests_count > 10
             ORDER BY requests_count DESC, last_request DESC
             LIMIT ?
         ''', (limit,))
+        return await cursor.fetchall()
+
+
+async def get_all_users():
+    """Получить всех пользователей из базы данных"""
+    async with aiosqlite.connect(DATABASE_NAME) as connection:
+        cursor = await connection.execute(f'''
+            SELECT user_id, username
+            FROM {USER_STATS_TABLE}
+        ''')
         return await cursor.fetchall()

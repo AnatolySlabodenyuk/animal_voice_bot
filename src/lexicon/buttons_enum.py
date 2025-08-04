@@ -7,3 +7,5 @@ class ButtonsEnum(enum.Enum):
     AUDIO_UPLOAD = "⬆️ Загрузить звук"
     HELP_BUTTON = "📄 Инструкция"
     SEARCH_IN_WEB = "🌎 Найти звук в сети"
+    GET_STATS = "📊 Получить статистику"
+    SEND_FEEDBACK = "📢 Отправить обратную связь всем"
