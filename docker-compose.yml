@@ -6,7 +6,10 @@ services:
     environment:
       BOT_TOKEN: "your_bot_token"
       BOT_ADMIN_USER_ID: "your_user_id"
+      DATABASE_PATH: "data/sounds_database.db"
     build:
       context: .
       dockerfile: Dockerfile
     restart: always
+    volumes:
+      - ./data:/app/data

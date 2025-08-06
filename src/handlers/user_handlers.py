@@ -198,7 +198,7 @@ async def search_audio(message: Message, state: FSMContext):
                     return
 
                 # Ограничиваем количество треков
-                for block in audio_blocks[:3]:
+                for block in audio_blocks[:5]:
                     try:
                         # Извлечение данных
                         title = block.find("div", class_="waveTitle").text.strip()

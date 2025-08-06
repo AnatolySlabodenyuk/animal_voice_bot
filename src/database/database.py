@@ -1,6 +1,9 @@
 import aiosqlite
+from config_data.config import Config, load_config
 
-DATABASE_NAME = "database/sounds_database.db"
+config: Config = load_config()
+
+DATABASE_NAME = config.tg_bot.database_path
 TABLE_NAME = "sounds_information"
 
 

@@ -20,10 +20,9 @@ config: Config = load_config()
 
 ADMIN_USER_ID = config.tg_bot.admin_user_id  # ЗАМЕНИ на свой Telegram user_id
 
-state_file_id = None
-
 
 class AudioUploadState(StatesGroup):
+    waiting_for_file_id = State()
     waiting_for_name = State()
     waiting_for_category = State()
 
@@ -43,10 +42,11 @@ async def process_admin_command(message: Message):
 
 
 @router.message(F.text == ButtonsEnum.AUDIO_UPLOAD.value)
-async def process_audio_upload_button(message: Message):
+async def process_audio_upload_button(message: Message, state: FSMContext):
     """
     Этот хэндлер срабатывает на кнопку загрузить звук
     """
+    await state.set_state(AudioUploadState.waiting_for_file_id)
     await message.answer(text=BaseCommandsEnum.AUDIO_UPLOAD.value)
 
 
@@ -55,8 +55,7 @@ async def process_upload_audio_new(message: Message, state: FSMContext):
     """
     Этот хэндлер срабатывает на загрузку аудио
     """
-    global state_file_id
-    state_file_id = message.audio.file_id
+    await state.update_data(waiting_for_file_id=message.audio.file_id)
     await message.answer(
         text=BaseCommandsEnum.SET_FILE_NAME.value,
         reply_markup=admin_kb
@@ -82,20 +81,17 @@ async def audio_category_chosen(message: Message, state: FSMContext):
     """
     Этот хэндлер ожидает ввода категории для файла
     """
-    global state_file_id
     await state.update_data(waiting_for_category=message.text)
     user_data = await state.get_data()
     await add_audio_to_table(
         file_name=user_data['waiting_for_name'],
         category=user_data['waiting_for_category'],
-        file_id=state_file_id or ""
+        file_id=user_data['waiting_for_file_id'] or ""
     )
     await message.answer(
         text=f"Аудиофайл сохранен с именем {user_data['waiting_for_name']}\n и категорией {user_data['waiting_for_category']}!",
         reply_markup=admin_kb
     )
-    # Сброс состояния и сохранённых данных у пользователя
-    state_file_id = None
     await state.clear()
 
 

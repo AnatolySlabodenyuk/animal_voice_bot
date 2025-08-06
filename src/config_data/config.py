@@ -6,6 +6,7 @@ from environs import Env
 class TgBot:
     token: str  # Токен для доступа к телеграм-боту
     admin_user_id: str
+    database_path: str
 
 
 @dataclass
@@ -20,5 +21,6 @@ def load_config(path: str | None = None) -> Config:
         tg_bot=TgBot(
             token=env("BOT_TOKEN"),
             admin_user_id=env("BOT_ADMIN_USER_ID"),
+            database_path=env("DATABASE_PATH")
         )
     )
