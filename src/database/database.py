@@ -6,6 +6,8 @@ config: Config = load_config()
 DATABASE_NAME = config.tg_bot.database_path
 TABLE_NAME = "sounds_information"
 
+TOP_USER_REQUESTS_COUNT = int(config.tg_bot.top_user_requests_count)
+
 
 async def create_table():
     async with aiosqlite.connect(DATABASE_NAME) as connection:
@@ -86,7 +88,7 @@ async def get_top_users_stats(limit: int = 50):
         cursor = await connection.execute(f'''
             SELECT user_id, username, requests_count, last_request
             FROM {USER_STATS_TABLE}
-            WHERE requests_count > 10
+            WHERE requests_count >= {TOP_USER_REQUESTS_COUNT}
             ORDER BY requests_count DESC, last_request DESC
             LIMIT ?
         ''', (limit,))

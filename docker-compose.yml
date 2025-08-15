@@ -7,6 +7,7 @@ services:
       BOT_TOKEN: "your_bot_token"
       BOT_ADMIN_USER_ID: "your_user_id"
       DATABASE_PATH: "data/sounds_database.db"
+      TOP_USER_REQUESTS_COUNT: "5"
     build:
       context: .
       dockerfile: Dockerfile
