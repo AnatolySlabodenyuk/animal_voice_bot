@@ -4,7 +4,7 @@ from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.filters.callback_data import CallbackData
 
-from database.database import get_file_name_from_table
+from database.database import get_audio_file_name_from_table
 from lexicon.voice_types_enum import VoiceCategoryEnum
 
 
@@ -61,7 +61,7 @@ async def create_voice_names_inline_kb(voice_names_list: list[str]) -> InlineKey
 
 async def main():
     result = await create_voice_names_inline_kb(
-        voice_names_list=await get_file_name_from_table(
+        voice_names_list=await get_audio_file_name_from_table(
             category=VoiceCategoryEnum.transport.value
         )
     )

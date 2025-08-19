@@ -10,7 +10,7 @@ from keyboards.admin_kb import admin_kb
 from keyboards.voice_category_simple_kb import voice_category_simple_kb
 from lexicon.base_commands_enum import BaseCommandsEnum
 from lexicon.buttons_enum import ButtonsEnum
-from database.database import add_audio_to_table
+from database.database import add_audio_to_table, add_image_to_table
 from database.database import get_top_users_stats, get_all_users
 import asyncio
 
@@ -21,10 +21,14 @@ config: Config = load_config()
 ADMIN_USER_ID = config.tg_bot.admin_user_id  # ЗАМЕНИ на свой Telegram user_id
 
 
-class AudioUploadState(StatesGroup):
-    waiting_for_file_id = State()
-    waiting_for_name = State()
-    waiting_for_category = State()
+class UploadState(StatesGroup):
+    waiting_for_audio_file_id = State()
+    waiting_for_audio_name = State()
+    waiting_for_audio_category = State()
+
+    waiting_for_image_file_id = State()
+    waiting_for_image_name = State()
+    waiting_for_image_category = State()
 
 
 @router.message(Command(commands="admin"))
@@ -41,12 +45,13 @@ async def process_admin_command(message: Message):
         await message.answer(BaseCommandsEnum.ACCESS_DENIED.value)
 
 
+# --- SOUNDS HANDLERS ---
 @router.message(F.text == ButtonsEnum.AUDIO_UPLOAD.value)
 async def process_audio_upload_button(message: Message, state: FSMContext):
     """
     Этот хэндлер срабатывает на кнопку загрузить звук
     """
-    await state.set_state(AudioUploadState.waiting_for_file_id)
+    await state.set_state(UploadState.waiting_for_audio_file_id)
     await message.answer(text=BaseCommandsEnum.AUDIO_UPLOAD.value)
 
 
@@ -55,46 +60,102 @@ async def process_upload_audio_new(message: Message, state: FSMContext):
     """
     Этот хэндлер срабатывает на загрузку аудио
     """
-    await state.update_data(waiting_for_file_id=message.audio.file_id)
+    await state.update_data(waiting_for_audio_file_id=message.audio.file_id)
     await message.answer(
-        text=BaseCommandsEnum.SET_FILE_NAME.value,
+        text=BaseCommandsEnum.SET_AUDIO_FILE_NAME.value,
         reply_markup=admin_kb
     )
-    await state.set_state(AudioUploadState.waiting_for_name)
+    await state.set_state(UploadState.waiting_for_audio_name)
 
 
-@router.message(AudioUploadState.waiting_for_name)
+@router.message(UploadState.waiting_for_audio_name)
 async def audio_name_chosen(message: Message, state: FSMContext):
     """
-    Этот хэндлер ожидает ввода названия для файла
+    Этот хэндлер ожидает ввода названия для аудио-файла
     """
-    await state.update_data(waiting_for_name=message.text)
+    await state.update_data(waiting_for_audio_name=message.text)
     await message.answer(
         text=BaseCommandsEnum.SET_FILE_CATEGORY.value,
         reply_markup=voice_category_simple_kb
     )
-    await state.set_state(AudioUploadState.waiting_for_category)
+    await state.set_state(UploadState.waiting_for_audio_category)
 
 
-@router.message(AudioUploadState.waiting_for_category)
+@router.message(UploadState.waiting_for_audio_category)
 async def audio_category_chosen(message: Message, state: FSMContext):
     """
-    Этот хэндлер ожидает ввода категории для файла
+    Этот хэндлер ожидает ввода категории для аудио-файла
     """
-    await state.update_data(waiting_for_category=message.text)
+    await state.update_data(waiting_for_audio_category=message.text)
     user_data = await state.get_data()
     await add_audio_to_table(
-        file_name=user_data['waiting_for_name'],
-        category=user_data['waiting_for_category'],
-        file_id=user_data['waiting_for_file_id'] or ""
+        file_name=user_data['waiting_for_audio_name'],
+        category=user_data['waiting_for_audio_category'],
+        file_id=user_data['waiting_for_audio_file_id'] or ""
     )
     await message.answer(
-        text=f"Аудиофайл сохранен с именем {user_data['waiting_for_name']}\n и категорией {user_data['waiting_for_category']}!",
+        text=f"Аудиофайл сохранен с именем {user_data['waiting_for_audio_name']}\n и категорией {user_data['waiting_for_audio_category']}!",
         reply_markup=admin_kb
     )
     await state.clear()
 
 
+# --- IMAGES HANDLERS ---
+@router.message(F.text == ButtonsEnum.IMAGE_UPLOAD.value)
+async def process_image_upload_button(message: Message, state: FSMContext):
+    """
+    Этот хэндлер срабатывает на кнопку загрузить картинку
+    """
+    await state.set_state(UploadState.waiting_for_image_file_id)
+    await message.answer(text=BaseCommandsEnum.IMAGE_UPLOAD.value)
+
+
+@router.message(F.photo)
+async def process_upload_image_new(message: Message, state: FSMContext):
+    """
+    Этот хэндлер срабатывает на загрузку картинки
+    """
+    await state.update_data(waiting_for_image_file_id=message.photo[-1].file_id)
+    await message.answer(
+        text=BaseCommandsEnum.SET_IMAGE_FILE_NAME.value,
+        reply_markup=admin_kb
+    )
+    await state.set_state(UploadState.waiting_for_image_name)
+
+
+@router.message(UploadState.waiting_for_image_name)
+async def image_name_chosen(message: Message, state: FSMContext):
+    """
+    Этот хэндлер ожидает ввода названия для картинки
+    """
+    await state.update_data(waiting_for_image_name=message.text)
+    await message.answer(
+        text=BaseCommandsEnum.SET_FILE_CATEGORY.value,
+        reply_markup=voice_category_simple_kb
+    )
+    await state.set_state(UploadState.waiting_for_image_category)
+
+
+@router.message(UploadState.waiting_for_image_category)
+async def image_category_chosen(message: Message, state: FSMContext):
+    """
+    Этот хэндлер ожидает ввода категории для картинки
+    """
+    await state.update_data(waiting_for_image_category=message.text)
+    user_data = await state.get_data()
+    await add_image_to_table(
+        file_name=user_data['waiting_for_image_name'],
+        category=user_data['waiting_for_image_category'],
+        file_id=user_data['waiting_for_image_file_id'] or ""
+    )
+    await message.answer(
+        text=f"Картинка сохранена с именем {user_data['waiting_for_image_name']}\n и категорией {user_data['waiting_for_image_category']}!",
+        reply_markup=admin_kb
+    )
+    await state.clear()
+
+
+# --- STATS HANDLERS ---
 @router.message(F.text == ButtonsEnum.GET_STATS.value)
 async def process_stats_command(message: Message):
     """
@@ -114,7 +175,9 @@ async def process_stats_command(message: Message):
 
 
 async def send_feedback_to_all_users(bot, message: Message):
-    """Отправить сообщение с предложением оставить обратную связь всем пользователям"""
+    """
+    Отправить сообщение с предложением оставить обратную связь всем пользователям
+    """
     if message.from_user and message.from_user.id == int(ADMIN_USER_ID):
         users = await get_all_users()
 
@@ -149,5 +212,7 @@ async def send_feedback_to_all_users(bot, message: Message):
 
 @router.message(F.text == ButtonsEnum.SEND_FEEDBACK.value)
 async def process_send_feedback_button(message: Message):
-    """Обработчик кнопки отправки обратной связи всем пользователям"""
+    """
+    Обработчик кнопки отправки обратной связи всем пользователям
+    """
     await send_feedback_to_all_users(message.bot, message)

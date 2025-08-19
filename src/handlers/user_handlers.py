@@ -9,7 +9,8 @@ from keyboards.voice_inline_kb import create_voice_category_inline_kb, \
     VoiceTypesCallbackFactory, create_voice_names_inline_kb, VoiceNamesCallbackFactory
 from lexicon.base_commands_enum import BaseCommandsEnum
 from lexicon.buttons_enum import ButtonsEnum
-from database.database import get_file_name_from_table, get_audio_file_id_from_table, increment_user_request_count
+from database.database import get_audio_file_name_from_table, get_audio_file_id_from_table, increment_user_request_count, \
+    get_image_file_id_from_table
 from bs4 import BeautifulSoup
 
 from lexicon.voice_types_enum import VoiceCategoryEnum
@@ -102,7 +103,7 @@ async def inline_products_button_press(
             await callback.message.answer(
                 text=BaseCommandsEnum.CHOSE_ANIMAL.value,
                 reply_markup=await create_voice_names_inline_kb(
-                    voice_names_list=await get_file_name_from_table(category=VoiceCategoryEnum.animals.value))
+                    voice_names_list=await get_audio_file_name_from_table(category=VoiceCategoryEnum.animals.value))
             )
         await callback.answer()
 
@@ -111,7 +112,7 @@ async def inline_products_button_press(
             await callback.message.answer(
                 text=BaseCommandsEnum.CHOSE_TRANSPORT.value,
                 reply_markup=await create_voice_names_inline_kb(
-                    voice_names_list=await get_file_name_from_table(category=VoiceCategoryEnum.transport.value))
+                    voice_names_list=await get_audio_file_name_from_table(category=VoiceCategoryEnum.transport.value))
             )
         await callback.answer()
 
@@ -120,7 +121,7 @@ async def inline_products_button_press(
             await callback.message.answer(
                 text=BaseCommandsEnum.CHOSE_OBJECT.value,
                 reply_markup=await create_voice_names_inline_kb(
-                    voice_names_list=await get_file_name_from_table(category=VoiceCategoryEnum.objects.value))
+                    voice_names_list=await get_audio_file_name_from_table(category=VoiceCategoryEnum.objects.value))
             )
         await callback.answer()
 
@@ -136,10 +137,12 @@ async def get_audio_file(callback: CallbackQuery, voice_name: str):
     """
     Универсальная функция для обработки нажатий на инлайн-кнопки с животными
     """
-    file_id = await get_audio_file_id_from_table(voice_name)
+    audio_file_id = await get_audio_file_id_from_table(voice_name)
+    image_file_id = await get_image_file_id_from_table(voice_name)
     await callback.answer(f"Так звучит {voice_name}")
-    if callback.message and file_id:
-        await callback.message.answer_audio(audio=file_id)
+    if callback.message and audio_file_id:
+        await callback.message.answer_audio(audio=audio_file_id)
+        # await callback.message.answer_photo(photo=image_file_id)
 
 
 @router.callback_query(VoiceNamesCallbackFactory.filter())
