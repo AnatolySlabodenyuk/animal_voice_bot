@@ -149,7 +149,7 @@ async def get_audio_file(callback: CallbackQuery, voice_name: str):
     await callback.answer(f"Так звучит {voice_name}")
     if callback.message and audio_file_id:
         await callback.message.answer_audio(audio=audio_file_id)
-        # await callback.message.answer_photo(photo=image_file_id)
+        await callback.message.answer_photo(photo=image_file_id)
 
 
 @router.callback_query(VoiceNamesCallbackFactory.filter())
