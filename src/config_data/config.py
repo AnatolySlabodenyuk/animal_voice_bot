@@ -6,8 +6,10 @@ from environs import Env
 class TgBot:
     token: str  # Токен для доступа к телеграм-боту
     admin_user_id: str
+    search_result_count: str
     database_path: str
     top_user_requests_count: str
+    feedback_message: str
 
 
 @dataclass
@@ -22,7 +24,10 @@ def load_config(path: str | None = None) -> Config:
         tg_bot=TgBot(
             token=env("BOT_TOKEN"),
             admin_user_id=env("BOT_ADMIN_USER_ID"),
+            search_result_count=env("SEARCH_RESULT_COUNT"),
             database_path=env("DATABASE_PATH"),
-            top_user_requests_count=env("TOP_USER_REQUESTS_COUNT")
+            top_user_requests_count=env("TOP_USER_REQUESTS_COUNT"),
+            feedback_message=env("FEEDBACK_MESSAGE")
+
         )
     )

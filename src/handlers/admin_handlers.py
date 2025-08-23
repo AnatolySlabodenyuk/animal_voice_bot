@@ -19,6 +19,7 @@ router = Router()
 config: Config = load_config()
 
 ADMIN_USER_ID = config.tg_bot.admin_user_id  # ЗАМЕНИ на свой Telegram user_id
+feedback_message = config.tg_bot.feedback_message
 
 
 class UploadState(StatesGroup):
@@ -51,8 +52,11 @@ async def process_audio_upload_button(message: Message, state: FSMContext):
     """
     Этот хэндлер срабатывает на кнопку загрузить звук
     """
-    await state.set_state(UploadState.waiting_for_audio_file_id)
-    await message.answer(text=BaseCommandsEnum.AUDIO_UPLOAD.value)
+    if message.from_user and message.from_user.id == int(ADMIN_USER_ID):
+        await state.set_state(UploadState.waiting_for_audio_file_id)
+        await message.answer(text=BaseCommandsEnum.AUDIO_UPLOAD.value)
+    else:
+        await message.answer(BaseCommandsEnum.ACCESS_DENIED.value)
 
 
 @router.message(F.audio)
@@ -60,12 +64,15 @@ async def process_upload_audio_new(message: Message, state: FSMContext):
     """
     Этот хэндлер срабатывает на загрузку аудио
     """
-    await state.update_data(waiting_for_audio_file_id=message.audio.file_id)
-    await message.answer(
-        text=BaseCommandsEnum.SET_AUDIO_FILE_NAME.value,
-        reply_markup=admin_kb
-    )
-    await state.set_state(UploadState.waiting_for_audio_name)
+    if message.from_user and message.from_user.id == int(ADMIN_USER_ID):
+        await state.update_data(waiting_for_audio_file_id=message.audio.file_id)
+        await message.answer(
+            text=BaseCommandsEnum.SET_AUDIO_FILE_NAME.value,
+            reply_markup=admin_kb
+        )
+        await state.set_state(UploadState.waiting_for_audio_name)
+    else:
+        await message.answer(BaseCommandsEnum.ACCESS_DENIED.value)
 
 
 @router.message(UploadState.waiting_for_audio_name)
@@ -106,8 +113,11 @@ async def process_image_upload_button(message: Message, state: FSMContext):
     """
     Этот хэндлер срабатывает на кнопку загрузить картинку
     """
-    await state.set_state(UploadState.waiting_for_image_file_id)
-    await message.answer(text=BaseCommandsEnum.IMAGE_UPLOAD.value)
+    if message.from_user and message.from_user.id == int(ADMIN_USER_ID):
+        await state.set_state(UploadState.waiting_for_image_file_id)
+        await message.answer(text=BaseCommandsEnum.IMAGE_UPLOAD.value)
+    else:
+        await message.answer(BaseCommandsEnum.ACCESS_DENIED.value)
 
 
 @router.message(F.photo)
@@ -115,12 +125,15 @@ async def process_upload_image_new(message: Message, state: FSMContext):
     """
     Этот хэндлер срабатывает на загрузку картинки
     """
-    await state.update_data(waiting_for_image_file_id=message.photo[-1].file_id)
-    await message.answer(
-        text=BaseCommandsEnum.SET_IMAGE_FILE_NAME.value,
-        reply_markup=admin_kb
-    )
-    await state.set_state(UploadState.waiting_for_image_name)
+    if message.from_user and message.from_user.id == int(ADMIN_USER_ID):
+        await state.update_data(waiting_for_image_file_id=message.photo[-1].file_id)
+        await message.answer(
+            text=BaseCommandsEnum.SET_IMAGE_FILE_NAME.value,
+            reply_markup=admin_kb
+        )
+        await state.set_state(UploadState.waiting_for_image_name)
+    else:
+        await message.answer(BaseCommandsEnum.ACCESS_DENIED.value)
 
 
 @router.message(UploadState.waiting_for_image_name)
@@ -192,7 +205,7 @@ async def send_feedback_to_all_users(bot, message: Message):
             try:
                 await bot.send_message(
                     chat_id=user_id,
-                    text=BaseCommandsEnum.FEEDBACK_MESSAGE.value
+                    text=feedback_message
                 )
                 success_count += 1
                 # Небольшая задержка чтобы не превысить лимиты Telegram

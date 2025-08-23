@@ -4,18 +4,25 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
+
+from config_data.config import Config, load_config
 from keyboards.base_kb import base_kb
 from keyboards.voice_inline_kb import create_voice_category_inline_kb, \
     VoiceTypesCallbackFactory, create_voice_names_inline_kb, VoiceNamesCallbackFactory
 from lexicon.base_commands_enum import BaseCommandsEnum
 from lexicon.buttons_enum import ButtonsEnum
-from database.database import get_audio_file_name_from_table, get_audio_file_id_from_table, increment_user_request_count, \
+from database.database import get_audio_file_name_from_table, get_audio_file_id_from_table, \
+    increment_user_request_count, \
     get_image_file_id_from_table
 from bs4 import BeautifulSoup
 
 from lexicon.voice_types_enum import VoiceCategoryEnum
 
 router = Router()
+
+config: Config = load_config()
+
+search_result_count = int(config.tg_bot.search_result_count)
 
 
 class SearchInNetState(StatesGroup):
@@ -201,7 +208,7 @@ async def search_audio(message: Message, state: FSMContext):
                     return
 
                 # Ограничиваем количество треков
-                for block in audio_blocks[:5]:
+                for block in audio_blocks[:search_result_count]:
                     try:
                         # Извлечение данных
                         title = block.find("div", class_="waveTitle").text.strip()
