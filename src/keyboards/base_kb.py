@@ -4,20 +4,20 @@ from lexicon.buttons_enum import ButtonsEnum
 
 # ------- Создаем клавиатуру через ReplyKeyboardBuilder -------
 # Создаем кнопки
-button_restart: KeyboardButton = KeyboardButton(
-    text=ButtonsEnum.RESTART_BUTTON.value
-)
+button_restart: KeyboardButton = KeyboardButton(text=ButtonsEnum.RESTART_BUTTON.value)
 
 voice_category_choose: KeyboardButton = KeyboardButton(
     text=ButtonsEnum.VOICE_CATEGORY_CHOOSE_BUTTON.value
 )
 
-button_help: KeyboardButton = KeyboardButton(
-    text=ButtonsEnum.HELP_BUTTON.value
-)
+button_help: KeyboardButton = KeyboardButton(text=ButtonsEnum.HELP_BUTTON.value)
 
 button_search_in_web: KeyboardButton = KeyboardButton(
     text=ButtonsEnum.SEARCH_IN_WEB.value
+)
+
+button_guess_sound: KeyboardButton = KeyboardButton(
+    text=ButtonsEnum.GUESS_SOUND_BUTTON.value
 )
 
 # Инициализируем билдер для клавиатуры с кнопками:
@@ -27,9 +27,10 @@ base_kb_builder = ReplyKeyboardBuilder()
 base_kb_builder.row(
     button_restart,
     voice_category_choose,
+    button_guess_sound,
     button_help,
     button_search_in_web,
-    width=1
+    width=1,
 )
 
 # Создаем клавиатуру с кнопками:

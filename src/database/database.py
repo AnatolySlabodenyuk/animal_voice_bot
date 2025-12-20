@@ -143,3 +143,30 @@ async def get_all_users():
             FROM {USER_STATS_TABLE}
         ''')
         return await cursor.fetchall()
+
+
+# --- GAME LOGIC ---
+async def get_random_sound() -> tuple[str, str, str] | None:
+    """Получить случайный звук (file_name, category, file_id)"""
+    async with aiosqlite.connect(DATABASE_NAME) as connection:
+        cursor = await connection.execute(f'''
+            SELECT file_name, category, file_id 
+            FROM {SOUNDS_TABLE_NAME}
+            ORDER BY RANDOM()
+            LIMIT 1
+        ''')
+        return await cursor.fetchone()
+
+
+async def get_random_names(count: int, exclude_name: str) -> list[str]:
+    """Получить случайные названия звуков для вариантов ответов, исключая правильный"""
+    async with aiosqlite.connect(DATABASE_NAME) as connection:
+        cursor = await connection.execute(f'''
+            SELECT DISTINCT file_name 
+            FROM {SOUNDS_TABLE_NAME}
+            WHERE file_name != ?
+            ORDER BY RANDOM()
+            LIMIT ?
+        ''', (exclude_name, count))
+        result = await cursor.fetchall()
+        return [row[0] for row in result]
