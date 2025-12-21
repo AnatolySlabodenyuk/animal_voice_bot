@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import os
 import random
 from aiogram import Bot
@@ -15,6 +16,9 @@ config: Config = load_config()
 bot = Bot(token=config.tg_bot.token)
 
 app = FastAPI()
+
+# Подключаем статические файлы
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
 
 
 @app.get("/game", response_class=HTMLResponse)
