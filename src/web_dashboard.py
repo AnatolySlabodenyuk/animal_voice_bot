@@ -18,7 +18,32 @@ bot = Bot(token=config.tg_bot.token)
 app = FastAPI()
 
 # Подключаем статические файлы
-app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")),
+    name="static",
+)
+
+
+@app.get("/")
+async def root():
+    """
+    Перенаправление на страницу игры или приветствие
+    """
+    from fastapi.responses import RedirectResponse
+
+    return RedirectResponse(url="/game")
+
+
+@app.get("/favicon.ico")
+async def favicon():
+    """
+    Отдаем реальную иконку сайта
+    """
+    from fastapi.responses import FileResponse
+
+    file_path = os.path.join(os.path.dirname(__file__), "static", "favicon.png")
+    return FileResponse(file_path)
 
 
 @app.get("/game", response_class=HTMLResponse)
