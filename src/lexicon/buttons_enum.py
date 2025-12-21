@@ -11,3 +11,4 @@ class ButtonsEnum(enum.Enum):
     GET_STATS = "📊 Получить статистику"
     SEND_FEEDBACK = "📢 Отправить обратную связь всем"
     GUESS_SOUND_BUTTON = "🧩 Угадай Звук"
+    GUESS_SOUND_WEB_BUTTON = "🧩 Угадай Звук Веб"

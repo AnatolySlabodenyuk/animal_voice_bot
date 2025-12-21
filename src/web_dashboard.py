@@ -1,69 +1,77 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from jinja2 import Template
-import aiosqlite
 import os
-import plotly.graph_objs as go
+import random
+from aiogram import Bot
+from config_data.config import Config, load_config
+from database.database import (
+    get_random_sound,
+    get_random_names,
+    get_image_file_id_from_table,
+)
 
-DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'database', 'sounds_database.db')
+# Загружаем конфиг и инициализируем бота для получения ссылок на файлы
+config: Config = load_config()
+bot = Bot(token=config.tg_bot.token)
 
 app = FastAPI()
 
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Статистика пользователей</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        table { border-collapse: collapse; width: 60%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background: #eee; }
-    </style>
-</head>
-<body>
-    <h2>Топ пользователей по запросам</h2>
-    <table>
-        <tr><th>#</th><th>User ID</th><th>Username</th><th>Requests</th><th>Last Request</th></tr>
-        {% for row in stats %}
-        <tr>
-            <td>{{ loop.index }}</td>
-            <td>{{ row[0] }}</td>
-            <td>{{ row[1] or '' }}</td>
-            <td>{{ row[2] }}</td>
-            <td>{{ row[3] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {{ plotly_html|safe }}
-</body>
-</html>
-"""
+
+@app.get("/game", response_class=HTMLResponse)
+async def game_page():
+    """
+    Страница мини-приложения
+    """
+    file_path = os.path.join(os.path.dirname(__file__), "templates", "game.html")
+    if not os.path.exists(file_path):
+        return HTMLResponse("Template not found", status_code=404)
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    return HTMLResponse(content)
 
 
-async def get_stats():
-    async with aiosqlite.connect(DATABASE_PATH) as conn:
-        cursor = await conn.execute(
-            """
-            SELECT user_id, username, requests_count, last_request
-            FROM user_stats
-            ORDER BY requests_count DESC, last_request DESC LIMIT 20
-            """
+@app.get("/api/get_question")
+async def get_question():
+    """
+    API для получения вопроса для игры
+    """
+    sound = await get_random_sound()
+    if not sound:
+        return {"error": "No sounds found"}
+
+    correct_name, category, audio_file_id = sound
+
+    # Получаем ссылку на аудио
+    try:
+        audio_file = await bot.get_file(audio_file_id)
+        audio_url = f"https://api.telegram.org/file/bot{config.tg_bot.token}/{audio_file.file_path}"
+    except Exception as e:
+        print(f"Error getting audio link: {e}")
+        audio_url = ""
+
+    # Выбираем неправильные ответы
+    decoys = await get_random_names(count=2, exclude_name=correct_name)
+
+    # Формируем список вариантов
+    names = [correct_name] + decoys
+    random.shuffle(names)
+
+    options = []
+    for name in names:
+        image_file_id = await get_image_file_id_from_table(name)
+        image_url = ""
+        if image_file_id:
+            try:
+                # Получаем ссылку на картинку
+                # Важно: телеграм ссылки живут 1 час
+                img_file = await bot.get_file(image_file_id)
+                image_url = f"https://api.telegram.org/file/bot{config.tg_bot.token}/{img_file.file_path}"
+            except Exception as e:
+                print(f"Error getting image link for {name}: {e}")
+
+        options.append(
+            {"name": name, "image_url": image_url, "is_correct": (name == correct_name)}
         )
-        return await cursor.fetchall()
 
-
-def make_plotly_bar(stats):
-    usernames = [row[1] if row[1] else str(row[0]) for row in stats]
-    counts = [row[2] for row in stats]
-    fig = go.Figure([go.Bar(x=usernames, y=counts)])
-    fig.update_layout(title="Топ пользователей по запросам", xaxis_title="Пользователь", yaxis_title="Запросов")
-    return fig.to_html(full_html=False, include_plotlyjs='cdn')
-
-
-@app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    stats = await get_stats()
-    plotly_html = make_plotly_bar(stats) if stats else ""
-    template = Template(HTML_TEMPLATE)
-    return template.render(stats=stats, plotly_html=plotly_html)
+    return {"voice_url": audio_url, "options": options}
