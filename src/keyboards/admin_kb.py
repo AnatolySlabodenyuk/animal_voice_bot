@@ -4,6 +4,10 @@ from lexicon.buttons_enum import ButtonsEnum
 
 # ------- Создаем клавиатуру через ReplyKeyboardBuilder -------
 # Создаем кнопки
+button_guess_sound: KeyboardButton = KeyboardButton(
+    text=ButtonsEnum.GUESS_SOUND_BUTTON_OLD.value
+)
+
 button_audio_upload: KeyboardButton = KeyboardButton(
     text=ButtonsEnum.AUDIO_UPLOAD.value
 )
@@ -25,6 +29,7 @@ admin_kb_builder = ReplyKeyboardBuilder()
 
 # Добавляем кнопки в билдер с аргументом width=1 (количество кнопок в ряду)
 admin_kb_builder.row(
+    button_guess_sound,
     button_audio_upload,
     button_image_upload,
     button_send_feedback,

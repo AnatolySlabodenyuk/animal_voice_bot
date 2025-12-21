@@ -1,16 +1,19 @@
+import random
+
 from aiogram import F, Router
-from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 
 from config_data.config import Config, load_config
 from keyboards.admin_kb import admin_kb
 from keyboards.voice_category_simple_kb import voice_category_simple_kb
+from keyboards.voice_inline_kb import create_game_inline_kb, GameCallbackFactory
 from lexicon.base_commands_enum import BaseCommandsEnum
 from lexicon.buttons_enum import ButtonsEnum
-from database.database import add_audio_to_table, add_image_to_table
+from database.database import add_audio_to_table, add_image_to_table, increment_user_request_count, get_random_sound, \
+    get_random_names
 from database.database import get_top_users_stats, get_all_users
 import asyncio
 
@@ -229,3 +232,58 @@ async def process_send_feedback_button(message: Message):
     Обработчик кнопки отправки обратной связи всем пользователям
     """
     await send_feedback_to_all_users(message.bot, message)
+
+
+# --- GAME HANDLERS ---
+@router.message(F.text == ButtonsEnum.GUESS_SOUND_BUTTON_OLD.value)
+async def process_guess_sound_button(message: Message):
+    """
+    Этот хэндлер срабатывает на кнопку "Угадай Звук"
+    """
+    if message.from_user:
+        await increment_user_request_count(
+            message.from_user.id, message.from_user.username or ""
+        )
+
+    sound = await get_random_sound()
+    if not sound:
+        await message.answer("В базе пока нет звуков для игры.")
+        return
+
+    correct_name, category, file_id = sound
+    decoys = await get_random_names(count=2, exclude_name=correct_name)
+
+    options = [(correct_name, True)] + [(name, False) for name in decoys]
+    random.shuffle(options)
+
+    await message.answer_audio(audio=file_id, caption="🎧 Угадай, чей это звук?")
+
+    await message.answer(
+        text=BaseCommandsEnum.CHOOSE_ANSWER.value,
+        reply_markup=await create_game_inline_kb(options, correct_answer=correct_name),
+    )
+
+
+@router.callback_query(GameCallbackFactory.filter())
+async def process_game_answer(
+        callback: CallbackQuery, callback_data: GameCallbackFactory
+):
+    """
+    Этот хэндлер обрабатывает ответ в игре
+    """
+    if callback.from_user:
+        await increment_user_request_count(
+            callback.from_user.id, callback.from_user.username or ""
+        )
+
+    if callback_data.is_correct:
+        await callback.message.edit_text(
+            text=f"✅ Верно! Это {callback_data.answer}! 🎉🎉🎉"
+        )
+        await callback.message.answer("🎉")
+    else:
+        await callback.message.edit_text(
+            text=f"❌ Увы, неверно. Правильный ответ - {callback_data.correct_answer}"
+        )
+        await callback.message.answer("🤷‍♂️")
+    await callback.answer()

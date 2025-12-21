@@ -23,10 +23,6 @@ button_search_in_web: KeyboardButton = KeyboardButton(
     text=ButtonsEnum.SEARCH_IN_WEB.value
 )
 
-button_guess_sound: KeyboardButton = KeyboardButton(
-    text=ButtonsEnum.GUESS_SOUND_BUTTON.value
-)
-
 # Инициализируем билдер для клавиатуры с кнопками:
 base_kb_builder = ReplyKeyboardBuilder()
 
@@ -34,7 +30,7 @@ base_kb_builder = ReplyKeyboardBuilder()
 base_kb_builder.row(
     button_restart,
     voice_category_choose,
-    button_guess_sound,
+
     button_guess_sound_web,
     button_help,
     button_search_in_web,
