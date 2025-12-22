@@ -1,6 +1,11 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, WebAppInfo
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from lexicon.buttons_enum import ButtonsEnum
+from config_data.config import Config, load_config
+
+config: Config = load_config()
+
+webapp_url = config.tg_bot.webapp_url
 
 # ------- Создаем клавиатуру через ReplyKeyboardBuilder -------
 # Создаем кнопки
@@ -13,7 +18,7 @@ voice_category_choose: KeyboardButton = KeyboardButton(
 button_guess_sound_web: KeyboardButton = KeyboardButton(
     text=ButtonsEnum.GUESS_SOUND_WEB_BUTTON.value,
     web_app=WebAppInfo(
-        url="https://subpallial-wittier-hal.ngrok-free.dev/game"
+        url=f"{webapp_url}/game"
     ),  # Placeholder - REPLACE WITH YOUR HTTPS URL
 )
 

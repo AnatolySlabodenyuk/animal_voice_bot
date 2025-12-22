@@ -10,6 +10,7 @@ class TgBot:
     database_path: str
     top_user_requests_count: str
     feedback_message: str
+    webapp_url: str
 
 
 @dataclass
@@ -27,7 +28,8 @@ def load_config(path: str | None = None) -> Config:
             search_result_count=env("SEARCH_RESULT_COUNT"),
             database_path=env("DATABASE_PATH"),
             top_user_requests_count=env("TOP_USER_REQUESTS_COUNT"),
-            feedback_message=env("FEEDBACK_MESSAGE")
+            feedback_message=env("FEEDBACK_MESSAGE"),
+            webapp_url=env("WEBAPP_URL")
 
         )
     )
