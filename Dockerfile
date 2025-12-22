@@ -7,4 +7,9 @@ COPY requirements.txt /
 
 RUN pip install -r /requirements.txt
 
-CMD ["python", "main.py"]
+
+
+RUN sed -i 's/\r$//' /app/start.sh
+RUN chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]
