@@ -36,7 +36,6 @@ base_kb_builder = ReplyKeyboardBuilder()
 base_kb_builder.row(
     button_restart,
     voice_category_choose,
-
     button_guess_sound_web,
     button_help,
     button_search_in_web,

@@ -88,5 +88,5 @@ docker compose up -d --build
     ```
 4.  Для работы Mini App запустите веб-сервер отдельно:
     ```bash
-    uvicorn src.web_dashboard:app --reload
+    uvicorn src.sound_game:app --reload
     ```
