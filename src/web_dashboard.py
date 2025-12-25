@@ -1,16 +1,15 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+import logging
 import os
 import random
-import logging
+
 from aiogram import Bot
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+
 from config_data.config import Config, load_config
-from database.database import (
-    get_random_sound,
-    get_random_names,
-    get_image_file_id_from_table,
-)
+from database.database import (get_image_file_id_from_table, get_random_names,
+                               get_random_sound)
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)

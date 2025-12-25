@@ -1,7 +1,8 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, WebAppInfo
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
-from lexicon.buttons_enum import ButtonsEnum
+
 from config_data.config import Config, load_config
+from lexicon.buttons_enum import ButtonsEnum
 
 config: Config = load_config()
 

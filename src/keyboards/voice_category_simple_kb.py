@@ -1,5 +1,6 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
+
 from lexicon.voice_types_enum import VoiceCategoryEnum
 
 # ------- Создаем клавиатуру через ReplyKeyboardBuilder -------

@@ -2,12 +2,14 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
-from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+
 from config_data.config import Config, load_config
-from handlers import other_handlers, user_handlers, admin_handlers
+from database.database import (create_images_table, create_sounds_table,
+                               create_user_stats_table)
+from handlers import admin_handlers, other_handlers, user_handlers
 from keyboards.set_menu import set_main_menu
-from database.database import create_sounds_table, create_user_stats_table, create_images_table
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)

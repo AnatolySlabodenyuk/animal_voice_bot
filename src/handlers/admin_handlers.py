@@ -1,21 +1,23 @@
+import asyncio
 import random
 
 from aiogram import F, Router
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import CallbackQuery, Message
 
 from config_data.config import Config, load_config
+from database.database import (add_audio_to_table, add_image_to_table,
+                               get_all_users, get_random_names,
+                               get_random_sound, get_top_users_stats,
+                               increment_user_request_count)
 from keyboards.admin_kb import admin_kb
 from keyboards.voice_category_simple_kb import voice_category_simple_kb
-from keyboards.voice_inline_kb import create_game_inline_kb, GameCallbackFactory
+from keyboards.voice_inline_kb import (GameCallbackFactory,
+                                       create_game_inline_kb)
 from lexicon.base_commands_enum import BaseCommandsEnum
 from lexicon.buttons_enum import ButtonsEnum
-from database.database import add_audio_to_table, add_image_to_table, increment_user_request_count, get_random_sound, \
-    get_random_names
-from database.database import get_top_users_stats, get_all_users
-import asyncio
 
 router = Router()
 

@@ -1,8 +1,8 @@
 import asyncio
 
+from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.filters.callback_data import CallbackData
 
 from database.database import get_audio_file_name_from_table
 from lexicon.voice_types_enum import VoiceCategoryEnum

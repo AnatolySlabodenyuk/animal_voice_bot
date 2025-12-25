@@ -1,5 +1,6 @@
 from aiogram import Router
 from aiogram.types import Message
+
 from lexicon.base_commands_enum import BaseCommandsEnum
 
 router = Router()

@@ -1,28 +1,23 @@
 import aiohttp
 from aiogram import F, Router
-from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
-
-from config_data.config import Config, load_config
-from keyboards.base_kb import base_kb
-from keyboards.voice_inline_kb import (
-    create_voice_category_inline_kb,
-    VoiceTypesCallbackFactory,
-    create_voice_names_inline_kb,
-    VoiceNamesCallbackFactory,
-)
-from lexicon.base_commands_enum import BaseCommandsEnum
-from lexicon.buttons_enum import ButtonsEnum
-from database.database import (
-    get_audio_file_name_from_table,
-    get_audio_file_id_from_table,
-    increment_user_request_count,
-    get_image_file_id_from_table,
-)
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import CallbackQuery, Message
 from bs4 import BeautifulSoup
 
+from config_data.config import Config, load_config
+from database.database import (get_audio_file_id_from_table,
+                               get_audio_file_name_from_table,
+                               get_image_file_id_from_table,
+                               increment_user_request_count)
+from keyboards.base_kb import base_kb
+from keyboards.voice_inline_kb import (VoiceNamesCallbackFactory,
+                                       VoiceTypesCallbackFactory,
+                                       create_voice_category_inline_kb,
+                                       create_voice_names_inline_kb)
+from lexicon.base_commands_enum import BaseCommandsEnum
+from lexicon.buttons_enum import ButtonsEnum
 from lexicon.voice_types_enum import VoiceCategoryEnum
 
 router = Router()
