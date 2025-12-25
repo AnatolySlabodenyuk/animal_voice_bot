@@ -10,3 +10,4 @@ __pycache__/
 .cursor
 .cursorrules
 *.db
+docs-aiogram-dev-en-latest.pdf
