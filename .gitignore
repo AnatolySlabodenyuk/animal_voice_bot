@@ -8,6 +8,7 @@ __pycache__/
 .idea/
 .DS_Store
 .cursor
+.agent
 .cursorrules
 *.db
 docs-aiogram-dev-en-latest.pdf
