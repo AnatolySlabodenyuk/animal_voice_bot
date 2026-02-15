@@ -10,23 +10,35 @@ webapp_url = config.tg_bot.webapp_url
 
 # ------- Создаем клавиатуру через ReplyKeyboardBuilder -------
 # Создаем кнопки
-button_restart: KeyboardButton = KeyboardButton(text=ButtonsEnum.RESTART_BUTTON.value)
+button_restart: KeyboardButton = KeyboardButton(
+    text=ButtonsEnum.RESTART_BUTTON.value,
+    style='danger',
+    icon_custom_emoji_id='4970142833605345805'
+)
 
 voice_category_choose: KeyboardButton = KeyboardButton(
-    text=ButtonsEnum.VOICE_CATEGORY_CHOOSE_BUTTON.value
+    text=ButtonsEnum.VOICE_CATEGORY_CHOOSE_BUTTON.value,
+    style='primary',
+    icon_custom_emoji_id='5472317238851673400'
 )
 
 button_guess_sound_web: KeyboardButton = KeyboardButton(
     text=ButtonsEnum.GUESS_SOUND_WEB_BUTTON.value,
+    style='success',
+    icon_custom_emoji_id='5213430392798851273',
     web_app=WebAppInfo(
         url=f"{webapp_url}/game"
     ),  # Placeholder - REPLACE WITH YOUR HTTPS URL
 )
 
-button_help: KeyboardButton = KeyboardButton(text=ButtonsEnum.HELP_BUTTON.value)
+button_help: KeyboardButton = KeyboardButton(
+    text=ButtonsEnum.HELP_BUTTON.value,
+    icon_custom_emoji_id='5334882760735598374'
+)
 
 button_search_in_web: KeyboardButton = KeyboardButton(
-    text=ButtonsEnum.SEARCH_IN_WEB.value
+    text=ButtonsEnum.SEARCH_IN_WEB.value,
+    icon_custom_emoji_id='5231012545799666522'
 )
 
 # Инициализируем билдер для клавиатуры с кнопками:

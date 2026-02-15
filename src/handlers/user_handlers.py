@@ -45,7 +45,11 @@ async def process_start_command(message: Message):
         await increment_user_request_count(
             message.from_user.id, message.from_user.username or ""
         )
-    await message.answer(text=BaseCommandsEnum.START.value, reply_markup=base_kb)
+    await message.answer(
+        text=BaseCommandsEnum.START.value,
+        parse_mode='HTML',
+        reply_markup=base_kb
+    )
 
 
 @router.message(F.text == ButtonsEnum.RESTART_BUTTON.value)
@@ -57,7 +61,11 @@ async def process_restart_button(message: Message):
         await increment_user_request_count(
             message.from_user.id, message.from_user.username or ""
         )
-    await message.answer(text=BaseCommandsEnum.START.value, reply_markup=base_kb)
+    await message.answer(
+        text=BaseCommandsEnum.START.value,
+        parse_mode='HTML',
+        reply_markup=base_kb
+    )
 
 
 @router.message(Command(commands="help"))
@@ -82,7 +90,10 @@ async def process_help_button(message: Message):
         await increment_user_request_count(
             message.from_user.id, message.from_user.username or ""
         )
-    await message.answer(text=BaseCommandsEnum.HELP.value, reply_markup=base_kb)
+    await message.answer(
+        text=BaseCommandsEnum.HELP.value,
+        parse_mode='HTML',
+        reply_markup=base_kb)
 
 
 @router.message(F.text == ButtonsEnum.VOICE_CATEGORY_CHOOSE_BUTTON.value)
@@ -96,6 +107,7 @@ async def process_voice_category_choose_button(message: Message):
         )
     await message.answer(
         text=BaseCommandsEnum.CHOOSE_CATEGORY.value,
+        parse_mode='HTML',
         reply_markup=await create_voice_category_inline_kb(),
     )
 
@@ -195,7 +207,10 @@ async def process_search_in_web_button(message: Message, state: FSMContext):
         await increment_user_request_count(
             message.from_user.id, message.from_user.username or ""
         )
-    await message.answer(text=BaseCommandsEnum.SEARCH_IN_WEB_BUTTON.value)
+    await message.answer(
+        text=BaseCommandsEnum.SEARCH_IN_WEB_BUTTON.value,
+        parse_mode='HTML'
+    )
 
     await state.set_state(SearchInNetState.waiting_for_key_word)
 
