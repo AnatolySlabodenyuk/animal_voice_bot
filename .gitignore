@@ -12,3 +12,10 @@ __pycache__/
 .cursorrules
 *.db
 docs-aiogram-dev-en-latest.pdf
+.env
+
+# Tests
+tests/
+test_*.py
+*_test.py
+conftest.py
