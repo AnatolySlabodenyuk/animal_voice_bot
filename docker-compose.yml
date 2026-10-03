@@ -4,13 +4,13 @@ services:
   audio_hunter_bot:
     container_name: audio_hunter_bot
     environment:
-      BOT_TOKEN: "your_bot_token"
-      BOT_ADMIN_USER_ID: "your_user_id"
-      SEARCH_RESULT_COUNT: "5"
-      DATABASE_PATH: "data/sounds_database.db"
-      TOP_USER_REQUESTS_COUNT: "5"
-      FEEDBACK_MESSAGE: "Сообщение для обратной связи"
-      WEBAPP_URL: "https://example.com"
+      BOT_TOKEN: "${BOT_TOKEN:?BOT_TOKEN is required}"
+      BOT_ADMIN_USER_ID: "${BOT_ADMIN_USER_ID:?BOT_ADMIN_USER_ID is required}"
+      SEARCH_RESULT_COUNT: "${SEARCH_RESULT_COUNT:?SEARCH_RESULT_COUNT is required}"
+      DATABASE_PATH: "${DATABASE_PATH:?DATABASE_PATH is required}"
+      TOP_USER_REQUESTS_COUNT: "${TOP_USER_REQUESTS_COUNT:?TOP_USER_REQUESTS_COUNT is required}"
+      FEEDBACK_MESSAGE: "${FEEDBACK_MESSAGE:?FEEDBACK_MESSAGE is required}"
+      WEBAPP_URL: "${WEBAPP_URL:?WEBAPP_URL is required}"
     build:
       context: .
       dockerfile: Dockerfile
@@ -18,4 +18,4 @@ services:
     volumes:
       - ./data:/app/data
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
