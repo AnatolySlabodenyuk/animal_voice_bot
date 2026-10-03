@@ -19,3 +19,6 @@ tests/
 test_*.py
 *_test.py
 conftest.py
+
+# Local agent instructions
+/AGENTS.md
