@@ -20,4 +20,3 @@ class BaseCommandsEnum(enum.Enum):
     NO_USERS_FOUND = "❌ Пользователи не найдены в базе данных."
     ACCESS_DENIED = "❌ У вас нет доступа к этой команде."
     SOMETHING_WRONG = "Что-то пошло не так 🤷‍♂️"
-    CHOOSE_ANSWER = "Выбери правильный вариант ответа 👇️"

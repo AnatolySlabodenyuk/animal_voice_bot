@@ -12,6 +12,8 @@ class TgBot:
     top_user_requests_count: str
     feedback_message: str
     webapp_url: str
+    freesound_api_key: str = ""
+    web_sound_source: str = "both"
 
 
 @dataclass
@@ -30,7 +32,9 @@ def load_config(path: str | None = None) -> Config:
             database_path=env("DATABASE_PATH"),
             top_user_requests_count=env("TOP_USER_REQUESTS_COUNT"),
             feedback_message=env("FEEDBACK_MESSAGE"),
-            webapp_url=env("WEBAPP_URL")
+            webapp_url=env("WEBAPP_URL"),
+            freesound_api_key=env("FREESOUND_API_KEY", default="").strip(),
+            web_sound_source=env("WEB_SOUND_SOURCE", default="both").strip().lower(),
 
         )
     )

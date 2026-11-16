@@ -136,6 +136,29 @@ async def get_top_users_stats(limit: int = 50):
         return await cursor.fetchall()
 
 
+async def get_user_stats_page(sort: str, page: int, page_size: int = 8):
+    order = {
+        "active": "last_request DESC, requests_count DESC, user_id",
+        "requests": "requests_count DESC, last_request DESC, user_id",
+    }[sort]
+    async with aiosqlite.connect(DATABASE_NAME) as connection:
+        await connection.execute("BEGIN")
+        async with connection.execute(f"""
+            SELECT COUNT(*), COUNT(CASE WHEN last_request >= datetime('now', '-7 days') THEN 1 END)
+            FROM {USER_STATS_TABLE}
+        """) as cursor:
+            total, active = await cursor.fetchone()
+        pages = max(1, (total + page_size - 1) // page_size)
+        page = min(max(page, 0), pages - 1)
+        async with connection.execute(f"""
+            SELECT user_id, username, requests_count, last_request
+            FROM {USER_STATS_TABLE}
+            ORDER BY {order}
+            LIMIT ? OFFSET ?
+        """, (page_size, page * page_size)) as cursor:
+            return total, active, page, pages, await cursor.fetchall()
+
+
 async def get_all_users():
     """Получить всех пользователей из базы данных"""
     async with aiosqlite.connect(DATABASE_NAME) as connection:
