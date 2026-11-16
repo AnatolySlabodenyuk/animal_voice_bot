@@ -1,6 +1,5 @@
-version: "3.1"
-
 services:
+
   audio_hunter_bot:
     container_name: audio_hunter_bot
     environment:
@@ -11,6 +10,8 @@ services:
       TOP_USER_REQUESTS_COUNT: "${TOP_USER_REQUESTS_COUNT:?TOP_USER_REQUESTS_COUNT is required}"
       FEEDBACK_MESSAGE: "${FEEDBACK_MESSAGE:?FEEDBACK_MESSAGE is required}"
       WEBAPP_URL: "${WEBAPP_URL:?WEBAPP_URL is required}"
+      FREESOUND_API_KEY: "${FREESOUND_API_KEY:-}"
+      WEB_SOUND_SOURCE: "${WEB_SOUND_SOURCE:-both}"
     build:
       context: .
       dockerfile: Dockerfile

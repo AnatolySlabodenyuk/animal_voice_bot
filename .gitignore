@@ -1,24 +1,29 @@
-src/.env
-.venv/
-.mypy_cache/
-.vscode/
-venv/
-__pycache__/
-.pytest_cache/
 .idea/
-.DS_Store
-.cursor
-.agent
+.vscode/
+.cursor/
+.agent/
+data/
+database.db
+log/
+__pycache__/
+.cache/
+data/sounds_database.db
+dist/
+build/
+*.spec
 .cursorrules
 *.db
 docs-aiogram-dev-en-latest.pdf
 .env
 
-# Tests
-tests/
-test_*.py
-*_test.py
-conftest.py
+# Keep all test suites in version control
+!tests/
+tests/*
+!tests/*.py
+
+# Local Codex attachments and agent roles
+/.codex-attachments/
+/.codex/
 
 # Local agent instructions
 /AGENTS.md
