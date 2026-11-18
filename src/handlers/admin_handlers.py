@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 
 from aiogram import F, Router
@@ -20,6 +21,9 @@ from keyboards.rich_menu import (
 from lexicon.base_commands_enum import BaseCommandsEnum
 from lexicon.buttons_enum import ButtonsEnum
 from lexicon.voice_types_enum import VoiceCategoryEnum
+from services.broadcast import run_broadcast, BroadcastResult
+
+logger = logging.getLogger(__name__)
 
 router = Router()
 config = load_config()
@@ -33,6 +37,11 @@ ADMIN_STATS = "admin:stats"
 ADMIN_FEEDBACK = "admin:feedback"
 ADMIN_AUDIO_CATEGORY = "admin:audio:category:"
 ADMIN_IMAGE_CATEGORY = "admin:image:category:"
+
+# ---------------------------------------------------------------------------
+# Process-local broadcast guard – set() without await before releasing.
+# ---------------------------------------------------------------------------
+_broadcast_running: bool = False
 
 
 class UploadState(StatesGroup):
@@ -96,6 +105,116 @@ def category_screen(kind: str) -> RichMenuScreen:
             (back_button(ADMIN_MENU),),
         ),
     )
+
+
+def _broadcast_starting_screen(total: int) -> RichMenuScreen:
+    return RichMenuScreen(
+        f"\U0001f4e4 Рассылка началась\nПолучателей: {total}\nОтправка...",
+        (),
+    )
+
+
+def _broadcast_progress_screen(result: BroadcastResult) -> RichMenuScreen:
+    return RichMenuScreen(
+        (
+            f"\U0001f4e4 Рассылка в процессе\n"
+            f"Обработано: {result.processed} / {result.total}\n"
+            f"Отправлено: {result.sent}  Ошибок: {result.errors}  "
+            f"Повторных попыток: {result.retries}"
+        ),
+        (),
+    )
+
+
+def _broadcast_result_text(result: BroadcastResult) -> str:
+    lines = [
+        "\U0001f4e8 Рассылка завершена",
+        f"Всего получателей: {result.total}",
+        f"Обработано: {result.processed}",
+        f"\u2705 Отправлено: {result.sent}",
+        f"\u274c Ошибок: {result.errors}",
+        f"\U0001f504 Повторных попыток: {result.retries}",
+    ]
+    if result.forbidden:
+        lines.append(f"\U0001f6ab Запрет отправки: {result.forbidden}")
+    if result.unavailable:
+        lines.append(f"\u274c Недоступный чат: {result.unavailable}")
+    if result.temporary:
+        lines.append(f"\u23f3 Исчерпаны попытки (временные ошибки): {result.temporary}")
+    if result.other:
+        lines.append(f"\u2754 Прочие ошибки: {result.other}")
+    lines.append("\u2139\ufe0f Доставка, не подтверждение прочтения.")
+    return "\n".join(lines)
+
+
+def _broadcast_result_screen(result: BroadcastResult) -> RichMenuScreen:
+    return RichMenuScreen(
+        _broadcast_result_text(result),
+        ((back_button(ADMIN_MENU),),),
+    )
+
+
+async def _run_broadcast_flow(bot, callback_or_message, users, text: str) -> None:
+    """Core broadcast flow; must be called only while _broadcast_running is True."""
+    total = len(users)
+
+    # Determine how to show the initial progress menu.
+    # Support both real CallbackQuery and SimpleNamespace test doubles.
+    is_callback = hasattr(callback_or_message, "data")
+    menu_message = None  # will hold the editable Message
+
+    if is_callback:
+        # Assign menu_message before attempting the edit so a temporary
+        # initial edit failure doesn't prevent later progress/final edits.
+        msg = callback_or_message.message
+        if hasattr(msg, "message_id"):
+            menu_message = msg
+        try:
+            await msg.edit_text(
+                rich_message=build_rich_menu(_broadcast_starting_screen(total))
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Could not edit menu to starting screen; type=%s", type(exc).__name__)
+    else:
+        # Legacy text path: send a fresh progress menu.
+        try:
+            menu_message = await callback_or_message.answer_rich(
+                rich_message=build_rich_menu(_broadcast_starting_screen(total))
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Could not send starting menu; type=%s", type(exc).__name__)
+
+    async def on_progress(snapshot: BroadcastResult) -> None:
+        """Called by the service to update the progress menu."""
+        if menu_message is None:
+            return
+        try:
+            await menu_message.edit_text(
+                rich_message=build_rich_menu(_broadcast_progress_screen(snapshot))
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Progress menu update failed; type=%s", type(exc).__name__)
+
+    result = await run_broadcast(bot, users, text, on_progress=on_progress)
+
+    result_screen = _broadcast_result_screen(result)
+    edit_ok = False
+    if menu_message is not None:
+        try:
+            await menu_message.edit_text(rich_message=build_rich_menu(result_screen))
+            edit_ok = True
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Could not edit final menu; falling back to send; type=%s", type(exc).__name__)
+
+    if not edit_ok:
+        try:
+            await bot.send_message(
+                chat_id=int(ADMIN_USER_ID),
+                text=_broadcast_result_text(result),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Final fallback send to admin also failed; type=%s", type(exc).__name__)
+
 
 
 @router.message(Command(commands="admin"))
@@ -281,35 +400,59 @@ async def process_stats_menu(callback: CallbackQuery):
             raise
 
 
-async def send_feedback(bot, actor: Message | CallbackQuery) -> tuple[int, int]:
-    users = await get_all_users()
-    success_count = 0
-    error_count = 0
-    for user_id, _username in users:
-        try:
-            await bot.send_message(chat_id=user_id, text=feedback_message)
-            success_count += 1
-            await asyncio.sleep(0.05)
-        except Exception:
-            error_count += 1
-    return success_count, error_count
+async def _acquire_broadcast_guard() -> bool:
+    """Atomically set guard; returns True if acquired, False if already running.
+
+    No await between the check and the assignment – both are synchronous.
+    """
+    global _broadcast_running
+    if _broadcast_running:
+        return False
+    _broadcast_running = True
+    return True
 
 
-def feedback_screen(success_count: int, error_count: int) -> RichMenuScreen:
-    return RichMenuScreen(
-        f"{BaseCommandsEnum.FEEDBACK_SENT.value}\n✅ Успешно отправлено: {success_count}\n❌ Ошибок: {error_count}",
-        ((back_button(ADMIN_MENU),),),
-    )
+def _release_broadcast_guard() -> None:
+    global _broadcast_running
+    _broadcast_running = False
 
 
 @router.message(F.text == ButtonsEnum.SEND_FEEDBACK.value)
 async def process_send_feedback_button(message: Message):
-    if not await reject_non_admin(message):
-        await answer_screen(message, feedback_screen(*await send_feedback(message.bot, message)))
+    if await reject_non_admin(message):
+        return
+    if not await _acquire_broadcast_guard():
+        await message.answer("\u23f3 Рассылка уже выполняется. Дождитесь завершения.")
+        return
+    try:
+        users = await get_all_users()
+        await _run_broadcast_flow(message.bot, message, users, feedback_message)
+    finally:
+        _release_broadcast_guard()
 
 
 @router.callback_query(F.data == ADMIN_FEEDBACK)
 async def process_send_feedback_menu(callback: CallbackQuery):
-    if not await reject_non_admin(callback):
-        await callback.answer()
-        await edit_screen(callback, feedback_screen(*await send_feedback(callback.bot, callback)))
+    if await reject_non_admin(callback):
+        return
+    # Acknowledge the callback immediately – before any awaits that touch guard.
+    await callback.answer()
+    if not await _acquire_broadcast_guard():
+        # Already busy – try to show notice via edit, ignore failures.
+        try:
+            await callback.message.edit_text(
+                rich_message=build_rich_menu(
+                    RichMenuScreen(
+                        "\u23f3 Рассылка уже выполняется. Дождитесь завершения.",
+                        ((back_button(ADMIN_MENU),),),
+                    )
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Could not show busy notice; type=%s", type(exc).__name__)
+        return
+    try:
+        users = await get_all_users()
+        await _run_broadcast_flow(callback.bot, callback, users, feedback_message)
+    finally:
+        _release_broadcast_guard()

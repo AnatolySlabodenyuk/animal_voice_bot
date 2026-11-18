@@ -16,10 +16,9 @@ build/
 docs-aiogram-dev-en-latest.pdf
 .env
 
-# Keep all test suites in version control
-!tests/
-tests/*
-!tests/*.py
+# Ignore all test suites and superpowers docs
+/tests/
+/docs/superpowers/
 
 # Local Codex attachments and agent roles
 /.codex-attachments/
